@@ -14,7 +14,9 @@ public abstract class ConfigAdapter<T> {
 
     public abstract Set<String> keys();
 
-    public abstract boolean containsKey(String key);
+    public boolean containsKey(String key) {
+        return keys().contains(key);
+    }
 
     public Map<String, Object> getAsMap() {
         return new ConfigAdapterMap(this);

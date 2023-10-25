@@ -25,11 +25,6 @@ public class JSONConfigAdapter extends ConfigAdapter<JsonObject> {
     }
 
     @Override
-    public boolean containsKey(String key) {
-        return jsonObject.has(key);
-    }
-
-    @Override
     public Optional<Number> getNumber(String key) {
         return Optional.ofNullable(jsonObject.get(key))
                 .filter(JsonElement::isJsonPrimitive)

@@ -33,11 +33,6 @@ public class MemoryConfigAdapter extends ConfigAdapter<Map<String, Object>> {
     }
 
     @Override
-    public boolean containsKey(String key) {
-        return map.containsKey(key);
-    }
-
-    @Override
     public Map<String, Object> getAsMap() {
         return map;
     }
