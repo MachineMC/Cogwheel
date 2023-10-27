@@ -1,9 +1,9 @@
 package org.machinemc.cogwheel.config;
 
-import org.machinemc.cogwheel.*;
 import org.machinemc.cogwheel.keyformatter.IdentifierKeyFormatter;
 import org.machinemc.cogwheel.keyformatter.KeyFormatter;
 import org.machinemc.cogwheel.serialization.SerializerRegistry;
+import org.machinemc.cogwheel.*;
 
 public class ConfigProperties {
 

@@ -1,7 +1,7 @@
 package org.machinemc.cogwheel.json;
 
-import com.google.gson.*;
 import org.machinemc.cogwheel.config.ConfigAdapter;
+import com.google.gson.*;
 
 import java.util.*;
 

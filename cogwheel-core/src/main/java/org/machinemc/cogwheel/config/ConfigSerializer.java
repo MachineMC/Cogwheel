@@ -1,12 +1,12 @@
 package org.machinemc.cogwheel.config;
 
-import org.machinemc.cogwheel.*;
 import org.machinemc.cogwheel.keyformatter.KeyFormatter;
+import org.machinemc.cogwheel.*;
 import org.machinemc.cogwheel.serialization.Serializer;
 import org.machinemc.cogwheel.serialization.SerializerContext;
 import org.machinemc.cogwheel.serialization.SerializerFactory;
 import org.machinemc.cogwheel.serialization.SerializerRegistry;
-import org.machinemc.cogwheel.serialization.Serializers.ConfigurationSerializer;
+import org.machinemc.cogwheel.serialization.*;
 
 import java.io.File;
 import java.util.LinkedHashMap;
@@ -31,7 +31,7 @@ public abstract class ConfigSerializer<T> {
     @SuppressWarnings("unchecked")
     public <C extends Configuration> ConfigAdapter<T> serialize(C configuration) {
         ConfigAdapter<T> configAdapter = newAdapter();
-        ConfigurationSerializer<C> serializer = newSerializer(configuration);
+        Serializers.ConfigurationSerializer<C> serializer = newSerializer(configuration);
         configAdapter.load((Map<String, Object>) Serializer.serialize(serializer, configuration));
         return configAdapter;
     }
@@ -49,7 +49,7 @@ public abstract class ConfigSerializer<T> {
     }
 
     private <C extends Configuration> C load(ConfigAdapter<T> adapter, Class<C> configurationClass) {
-        ConfigurationSerializer<C> serializer = newSerializer(configurationClass);
+        Serializers.ConfigurationSerializer<C> serializer = newSerializer(configurationClass);
         C configuration = Serializer.deserialize(serializer, new LinkedHashMap<>(adapter.getAsMap()));
         if (configuration == null)
             throw new IllegalArgumentException("Could not load configuration: " + configurationClass);
@@ -57,12 +57,12 @@ public abstract class ConfigSerializer<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private <C extends Configuration> ConfigurationSerializer<C> newSerializer(C configuration) {
-        return (ConfigurationSerializer<C>) newSerializer(configuration.getClass());
+    private <C extends Configuration> Serializers.ConfigurationSerializer<C> newSerializer(C configuration) {
+        return (Serializers.ConfigurationSerializer<C>) newSerializer(configuration.getClass());
     }
 
-    private <C extends Configuration> ConfigurationSerializer<C> newSerializer(Class<C> configurationClass) {
-        return new ConfigurationSerializer<>(configurationClass, new SerializerContext(properties, this::newAdapter));
+    private <C extends Configuration> Serializers.ConfigurationSerializer<C> newSerializer(Class<C> configurationClass) {
+        return new Serializers.ConfigurationSerializer<>(configurationClass, new SerializerContext(properties, this::newAdapter));
     }
 
     public ConfigProperties getProperties() {

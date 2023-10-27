@@ -1,8 +1,8 @@
 package org.machinemc.cogwheel.util.error;
 
+import org.machinemc.cogwheel.serialization.SerializerContext;
 import org.jetbrains.annotations.NotNull;
 import org.machinemc.cogwheel.ErrorHandler;
-import org.machinemc.cogwheel.serialization.SerializerContext;
 
 import java.util.ArrayList;
 import java.util.Iterator;

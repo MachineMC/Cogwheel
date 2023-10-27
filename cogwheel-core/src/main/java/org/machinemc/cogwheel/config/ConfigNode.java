@@ -1,11 +1,11 @@
 package org.machinemc.cogwheel.config;
 
-import org.jetbrains.annotations.Nullable;
-import org.machinemc.cogwheel.annotations.*;
 import org.machinemc.cogwheel.keyformatter.KeyFormatter;
 import org.machinemc.cogwheel.serialization.Serializer;
 import org.machinemc.cogwheel.serialization.SerializerContext;
 import org.machinemc.cogwheel.serialization.Serializers;
+import org.jetbrains.annotations.Nullable;
+import org.machinemc.cogwheel.annotations.*;
 import org.machinemc.cogwheel.util.JavaUtils;
 
 import java.lang.annotation.Annotation;

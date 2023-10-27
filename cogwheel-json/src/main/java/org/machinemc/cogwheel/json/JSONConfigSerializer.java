@@ -1,12 +1,12 @@
 package org.machinemc.cogwheel.json;
 
+import org.machinemc.cogwheel.config.ConfigAdapter;
+import org.machinemc.cogwheel.config.ConfigProperties;
+import org.machinemc.cogwheel.config.ConfigSerializer;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.machinemc.cogwheel.config.ConfigAdapter;
-import org.machinemc.cogwheel.config.ConfigProperties;
-import org.machinemc.cogwheel.config.ConfigSerializer;
 
 import java.io.File;
 import java.io.FileReader;
