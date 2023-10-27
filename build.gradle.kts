@@ -37,7 +37,7 @@ publishing {
         create<MavenPublication>("maven") {
             groupId = "org.machinemc"
             artifactId = "cogwheel"
-            version = "1.0"
+            version = "1.0.0"
             from(components["java"])
         }
     }
