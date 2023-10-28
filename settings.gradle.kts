@@ -6,3 +6,4 @@ pluginManagement {
 
 include("cogwheel-core")
 include("cogwheel-json")
+include("cogwheel-yaml")
