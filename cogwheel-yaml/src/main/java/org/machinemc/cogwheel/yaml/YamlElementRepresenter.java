@@ -6,7 +6,9 @@ import org.snakeyaml.engine.v2.common.FlowStyle;
 import org.snakeyaml.engine.v2.common.NonPrintableStyle;
 import org.snakeyaml.engine.v2.common.ScalarStyle;
 import org.snakeyaml.engine.v2.exceptions.YamlEngineException;
+import org.snakeyaml.engine.v2.nodes.MappingNode;
 import org.snakeyaml.engine.v2.nodes.Node;
+import org.snakeyaml.engine.v2.nodes.ScalarNode;
 import org.snakeyaml.engine.v2.nodes.Tag;
 import org.snakeyaml.engine.v2.representer.BaseRepresenter;
 import org.snakeyaml.engine.v2.scanner.StreamReader;
@@ -28,13 +30,7 @@ public class YamlElementRepresenter extends BaseRepresenter {
         defaultScalarStyle = settings.getDefaultScalarStyle();
 
         nullRepresenter = data -> representScalar(Tag.NULL, "null");
-        representers.put(YamlNull.class, data -> {
-            YamlNull element = (YamlNull) data;
-            Node node = representScalar(Tag.NULL, "null");
-            if (settings.getDumpComments())
-                node.setBlockComments(element.getComments());
-            return node;
-        });
+        representers.put(YamlNull.class, data -> representScalar(Tag.NULL, "null"));
 
         representers.put(YamlPrimitive.class, data -> {
             YamlPrimitive element = (YamlPrimitive) data;
@@ -65,31 +61,33 @@ public class YamlElementRepresenter extends BaseRepresenter {
             if (defaultScalarStyle == ScalarStyle.PLAIN && MULTILINE_PATTERN.matcher(value).find())
                 style = ScalarStyle.LITERAL;
 
-            Node node = representScalar(tag, value, style);
-
-            if (settings.getDumpComments())
-                node.setBlockComments(element.getComments());
-
-            return node;
+            return representScalar(tag, value, style);
         });
 
         representers.put(YamlArray.class, data -> {
             YamlArray element = (YamlArray) data;
-            Node node = representSequence(Tag.SEQ, element, settings.getDefaultFlowStyle());
-            if (settings.getDumpComments())
-                node.setBlockComments(element.getComments());
-            return node;
+            return representSequence(Tag.SEQ, element, settings.getDefaultFlowStyle());
         });
 
         representers.put(YamlObject.class, data -> {
-            YamlObject element = (YamlObject) data;
-            Node node = representMapping(
+            YamlObject yaml = (YamlObject) data;
+            MappingNode node = (MappingNode) representMapping(
                     Tag.MAP,
-                    element.asMap(),
+                    yaml.asMap(),
                     settings.getDefaultFlowStyle()
             );
-            if (settings.getDumpComments())
-                node.setBlockComments(element.getComments());
+
+            if (!settings.getDumpComments())
+                return node;
+
+            node.getValue().forEach(nodeTuple -> {
+                if (!(nodeTuple.getKeyNode() instanceof ScalarNode keyNode)) return;
+                YamlElement element = yaml.get(keyNode.getValue());
+                if (element == null) return;
+                keyNode.setBlockComments(element.getComments());
+                nodeTuple.getValueNode().setInLineComments(element.getInlineComment());
+            });
+
             return node;
         });
 

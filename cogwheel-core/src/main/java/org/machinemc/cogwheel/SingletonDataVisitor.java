@@ -1,5 +1,7 @@
 package org.machinemc.cogwheel;
 
+import org.machinemc.cogwheel.config.ConfigAdapter;
+
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -97,6 +99,11 @@ public class SingletonDataVisitor implements DataVisitor {
     }
 
     @Override
+    public Optional<ConfigAdapter<?>> readConfig() {
+        return read(ConfigAdapter.class);
+    }
+
+    @Override
     public DataVisitor writeNull() {
         return write(null);
     }
@@ -132,6 +139,11 @@ public class SingletonDataVisitor implements DataVisitor {
     }
 
     @Override
+    public DataVisitor writeConfig(ConfigAdapter<?> configAdapter) {
+        return write(configAdapter);
+    }
+
+    @Override
     public String getCurrentKey() {
         return currentKey;
     }
@@ -161,6 +173,8 @@ public class SingletonDataVisitor implements DataVisitor {
         Object object;
 
         if (stack.size() > 1 && current instanceof Map map) object = map.get(currentKey);
+        else if (stack.size() > 1 && current instanceof ConfigAdapter<?> adapter)
+            object = adapter.getPrimitive(currentKey).orElse(null);
         else object = current;
 
         if (object == null) return Optional.empty();

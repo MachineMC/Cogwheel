@@ -11,6 +11,7 @@ import java.util.*;
 public sealed abstract class YamlElement permits YamlArray, YamlNull, YamlObject, YamlPrimitive {
 
     private String @Nullable [] comments;
+    private @Nullable String inlineComment;
 
     public abstract YamlElement deepCopy();
 
@@ -106,6 +107,15 @@ public sealed abstract class YamlElement permits YamlArray, YamlNull, YamlObject
 
     public void setComments(String @Nullable [] comments) {
         this.comments = comments;
+    }
+
+    public List<CommentLine> getInlineComment() {
+        if (inlineComment == null) return Collections.emptyList();
+        return Collections.singletonList(new CommentLine(Optional.empty(), Optional.empty(), inlineComment, CommentType.IN_LINE));
+    }
+
+    public void setInlineComment(@Nullable String comment) {
+        this.inlineComment = comment;
     }
 
 }

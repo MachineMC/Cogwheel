@@ -10,7 +10,6 @@ import org.machinemc.cogwheel.serialization.*;
 
 import java.io.File;
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 public abstract class ConfigSerializer<T> {
 
@@ -30,10 +29,8 @@ public abstract class ConfigSerializer<T> {
 
     @SuppressWarnings("unchecked")
     public <C extends Configuration> ConfigAdapter<T> serialize(C configuration) {
-        ConfigAdapter<T> configAdapter = newAdapter();
         Serializers.ConfigurationSerializer<C> serializer = newSerializer(configuration);
-        configAdapter.load((Map<String, Object>) Serializer.serialize(serializer, configuration));
-        return configAdapter;
+        return (ConfigAdapter<T>) Serializer.serialize(serializer, configuration);
     }
 
     public abstract T load(File file);

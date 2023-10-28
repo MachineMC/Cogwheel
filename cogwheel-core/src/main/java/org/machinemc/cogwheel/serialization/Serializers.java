@@ -547,13 +547,13 @@ public class Serializers {
                 if (comments != null) configAdapter.setComments(node.getFormattedName(), comments);
                 if (inlineComment != null) configAdapter.setInlineComment(node.getFormattedName(), inlineComment);
             });
-            visitor.writeMap(new LinkedHashMap<>(configAdapter.getAsMap()));
+            visitor.writeConfig(configAdapter);
         }
 
         @Override
         @SuppressWarnings({"unchecked", "rawtypes"})
         public @Nullable C deserialize(DataVisitor visitor, ErrorContainer errorContainer) {
-            Map<String, Object> config = visitor.readMap().orElse(null);
+            Map<String, Object> config = visitor.readConfig().map(ConfigAdapter::getAsMap).orElse(null);
             if (config == null) return null;
             Set<String> unhandledKeys = new LinkedHashSet<>(config.keySet());
             ErrorHandler errorHandler = properties.errorHandler();

@@ -1,6 +1,7 @@
 package org.machinemc.cogwheel;
 
 import org.jetbrains.annotations.Contract;
+import org.machinemc.cogwheel.config.ConfigAdapter;
 
 import java.util.Collection;
 import java.util.Map;
@@ -46,6 +47,8 @@ public interface DataVisitor {
 
     Optional<Map<String, Object>> readMap();
 
+    Optional<ConfigAdapter<?>> readConfig();
+
     @SuppressWarnings({"unchecked", "rawtypes"})
     default Optional<Object> readObject() {
         if (!isPresent()) return Optional.empty();
@@ -78,6 +81,8 @@ public interface DataVisitor {
 
     @Contract("_ -> this")
     DataVisitor writeMap(Map<String, Object> map);
+
+    DataVisitor writeConfig(ConfigAdapter<?> configAdapter);
 
     String getCurrentKey();
 

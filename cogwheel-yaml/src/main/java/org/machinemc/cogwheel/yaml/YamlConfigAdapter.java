@@ -105,7 +105,11 @@ public class YamlConfigAdapter extends ConfigAdapter<YamlObject> {
     }
 
     @Override
-    public void setInlineComment(String key, String comment) { }
+    public void setInlineComment(String key, String comment) {
+        YamlElement element = yamlObject.get(key);
+        if (element == null) return;;
+        element.setInlineComment(comment);
+    }
 
     @Override
     public void load(YamlObject yamlObject) {
