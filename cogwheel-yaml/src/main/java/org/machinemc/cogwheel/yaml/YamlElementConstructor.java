@@ -20,27 +20,27 @@ public class YamlElementConstructor extends BaseConstructor {
             Boolean value = Boolean.valueOf(((ScalarNode) node).getValue());
             YamlElement element = new YamlPrimitive(value);
             if (settings.getParseComments())
-                setComments(element, node);
+                applyComments(element, node);
             return element;
         });
         tagConstructors.put(Tag.STR, node -> {
             YamlElement element = new YamlPrimitive(((ScalarNode) node).getValue());
             if (settings.getParseComments())
-                setComments(element, node);
+                applyComments(element, node);
             return element;
         });
         tagConstructors.put(Tag.INT, node -> {
             Integer value = Integer.valueOf(((ScalarNode) node).getValue());
             YamlElement element = new YamlPrimitive(value);
             if (settings.getParseComments())
-                setComments(element, node);
+                applyComments(element, node);
             return element;
         });
         tagConstructors.put(Tag.FLOAT, node -> {
             Float value = Float.valueOf(((ScalarNode) node).getValue());
             YamlElement element = new YamlPrimitive(value);
             if (settings.getParseComments())
-                setComments(element, node);
+                applyComments(element, node);
             return element;
         });
         tagConstructors.put(Tag.SEQ, new ConstructYamlSeq());
@@ -94,7 +94,7 @@ public class YamlElementConstructor extends BaseConstructor {
             else
                 element = new YamlArray((List<YamlElement>) (List<?>) constructSequence(seqNode));
             if (settings.getParseComments())
-                setComments(element, node);
+                applyComments(element, node);
             return element;
         }
 
@@ -121,9 +121,14 @@ public class YamlElementConstructor extends BaseConstructor {
             } else {
                 map = constructMapping(mappingNode);
             }
-            map.forEach((key, value) -> yamlObject.add(((YamlPrimitive) key).getAsString(), (YamlElement) value));
+            map.forEach((key, value) -> {
+                YamlPrimitive yamlKey = (YamlPrimitive) key;
+                YamlElement yamlValue = (YamlElement) value;
+                yamlValue.setComments(yamlKey.getComments().stream().map(CommentLine::getValue).toArray(String[]::new));
+                yamlObject.add(yamlKey.getAsString(), yamlValue);
+            });
             if (settings.getParseComments())
-                setComments(yamlObject, node);
+                applyComments(yamlObject, node);
             return yamlObject;
         }
 
@@ -139,9 +144,19 @@ public class YamlElementConstructor extends BaseConstructor {
 
     }
 
-    private void setComments(YamlElement element, Node node) {
+    private void applyComments(YamlElement element, Node node) {
+        applyBlockComments(element, node);
+        applyInlineComments(element, node);
+    }
+
+    private void applyBlockComments(YamlElement element, Node node) {
         if (node.getBlockComments() == null || node.getBlockComments().isEmpty()) return;
         element.setComments(node.getBlockComments().stream().map(CommentLine::getValue).toArray(String[]::new));
+    }
+
+    private void applyInlineComments(YamlElement element, Node node) {
+        if (node.getInLineComments() == null || node.getInLineComments().isEmpty()) return;
+        element.setInlineComment(node.getInLineComments().stream().map(CommentLine::getValue).findFirst().orElseThrow());
     }
 
 }
