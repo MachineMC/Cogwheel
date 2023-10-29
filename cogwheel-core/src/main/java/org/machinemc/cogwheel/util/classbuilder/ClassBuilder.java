@@ -33,28 +33,31 @@ public abstract class ClassBuilder<T> {
 
     @SuppressWarnings("unchecked")
     public <C> Component<C> getComponent(String name, Class<C> type) {
+        checkComponentExists(name);
         Component<?> component = getComponent(name);
         return component != null ? component.getType().isAssignableFrom(type) ? (Component<C>) component : null : null;
     }
 
     public Component<?> getComponent(String name) {
+        checkComponentExists(name);
         return components.get(name);
     }
 
     protected <C> Component<C> getOrCreateComponent(String name, Class<C> type) {
-        if (!componentExists(name))
-            throw new IllegalArgumentException("Component '" + name + "' in class '" + cls.getName() + "' doesn't exist");
+        checkComponentExists(name);
         Component<C> component = getComponent(name, type);
         return component != null ? component : createComponent(name, type);
     }
 
     protected <C> Component<C> createComponent(String name, Class<C> type) {
+        checkComponentExists(name);
         if (getComponent(name, type) != null) return null;
         setComponent(name, type, null);
         return getComponent(name, type);
     }
 
     public <C> void setComponent(String name, Class<C> type, @Nullable C value) {
+        checkComponentExists(name);
         components.put(name, new Component<>(name, type, value));
     }
 
@@ -65,6 +68,11 @@ public abstract class ClassBuilder<T> {
     public abstract boolean componentExists(String name);
 
     public abstract T build();
+
+    private void checkComponentExists(String name) {
+        if (!componentExists(name))
+            throw new IllegalArgumentException("Component '" + name + "' in class '" + cls.getName() + "' doesn't exist");
+    }
 
     public static class Component<T> {
 
