@@ -47,7 +47,7 @@ public abstract class ConfigSerializer<T> {
 
     private <C extends Configuration> C load(ConfigAdapter<T> adapter, Class<C> configurationClass) {
         Serializers.ConfigurationSerializer<C> serializer = newSerializer(configurationClass);
-        C configuration = Serializer.deserialize(serializer, new LinkedHashMap<>(adapter.getAsMap()));
+        C configuration = Serializer.deserialize(serializer, adapter);
         if (configuration == null)
             throw new IllegalArgumentException("Could not load configuration: " + configurationClass);
         return configuration;
