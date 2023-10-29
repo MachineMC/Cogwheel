@@ -3,6 +3,7 @@ package org.machinemc.cogwheel.serialization;
 import org.machinemc.cogwheel.config.Configuration;
 import org.machinemc.cogwheel.serialization.Serializers.*;
 import org.machinemc.cogwheel.util.ArrayUtils;
+import org.machinemc.cogwheel.util.NumberUtils;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -79,14 +80,16 @@ public class SerializerRegistry {
         {
             allowRegistration = true;
 
-            addSerializer(Byte.class, new NumberSerializer<>(Number::byteValue, Byte::parseByte));
-            addSerializer(Short.class, new NumberSerializer<>(Number::shortValue, Short::parseShort));
-            addSerializer(Integer.class, new NumberSerializer<>(Number::intValue, Integer::parseInt));
-            addSerializer(Long.class, new NumberSerializer<>(Number::longValue, Long::parseLong));
-            addSerializer(Float.class, new NumberSerializer<>(Number::floatValue, Float::parseFloat));
-            addSerializer(Double.class, new NumberSerializer<>(Number::doubleValue, Double::parseDouble));
-            addSerializer(BigInteger.class, new NumberSerializer<>(number -> BigInteger.valueOf(number.longValue()), BigInteger::new));
-            addSerializer(BigDecimal.class, new NumberSerializer<>(number -> BigDecimal.valueOf(number.doubleValue()), BigDecimal::new));
+            addSerializer(Byte.class, new NumberSerializer<>(Byte.class, Number::byteValue));
+            addSerializer(Short.class, new NumberSerializer<>(Short.class, Number::shortValue));
+            addSerializer(Integer.class, new NumberSerializer<>(Integer.class, Number::intValue));
+            addSerializer(Long.class, new NumberSerializer<>(Long.class, Number::longValue));
+            addSerializer(Float.class, new NumberSerializer<>(Float.class, Number::floatValue));
+            addSerializer(Double.class, new NumberSerializer<>(Double.class, Number::doubleValue));
+            addSerializer(BigInteger.class, new NumberSerializer<>(BigInteger.class,
+                    number -> NumberUtils.parseInteger(number.toString())));
+            addSerializer(BigDecimal.class, new NumberSerializer<>(BigDecimal.class,
+                    number -> NumberUtils.parseDecimal(number.toString())));
 
             addSerializer(Boolean.class, new BooleanSerializer());
 
@@ -118,10 +121,6 @@ public class SerializerRegistry {
                     context -> new MapSerializer(context));
 
             allowRegistration = false;
-        }
-
-        private <N extends Number> void addNumber(Class<N> type, NumberSerializer<N> serializer) {
-            addSerializer(type, serializer);
         }
 
         @Override

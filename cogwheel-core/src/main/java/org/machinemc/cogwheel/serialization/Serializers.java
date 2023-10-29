@@ -6,6 +6,7 @@ import org.machinemc.cogwheel.ErrorHandler;
 import org.machinemc.cogwheel.config.*;
 import org.machinemc.cogwheel.util.ArrayUtils;
 import org.machinemc.cogwheel.util.JavaUtils;
+import org.machinemc.cogwheel.util.NumberUtils;
 import org.machinemc.cogwheel.util.classbuilder.ClassBuilder;
 import org.machinemc.cogwheel.util.classbuilder.ObjectBuilder;
 import org.machinemc.cogwheel.util.classbuilder.RecordBuilder;
@@ -68,12 +69,12 @@ public class Serializers {
 
     public static class NumberSerializer<N extends Number> implements Serializer<N> {
 
+        private final Class<N> type;
         private final Function<Number, N> numberFunction;
-        private final Function<String, N> stringFunction;
 
-        public NumberSerializer(Function<Number, N> numberFunction, Function<String, N> stringFunction) {
+        public NumberSerializer(Class<N> type, Function<Number, N> numberFunction) {
+            this.type = type;
             this.numberFunction = numberFunction;
-            this.stringFunction = stringFunction;
         }
 
         @Override
@@ -83,24 +84,20 @@ public class Serializers {
 
         @Override
         public @Nullable N deserialize(DataVisitor visitor, ErrorContainer errorContainer) {
-            N number = visitor.readNumber()
-                    .map(numberFunction)
-                    .orElse(null);
-            if (number != null) return number;
-            return visitor.readString()
+            Number number = visitor.readNumber().orElse(null);
+            if (type.isInstance(number)) return type.cast(number);
+            return Optional.ofNullable(number)
+                    .map(String::valueOf)
+                    .or(visitor::readString)
                     .map(string -> {
-                        block: try {
-                            return stringFunction.apply(string);
+                        try {
+                            Number parsed = NumberUtils.parse(string);
+                            if (type.isInstance(parsed)) return type.cast(parsed);
+                            return numberFunction.apply(new NumberUtils.ClampedNumber(parsed));
                         } catch (NumberFormatException e) {
-                            if (string.indexOf('.') == -1) break block;
-                            try {
-                                // Couldn't deserialize
-                                // Try our luck by deserialize again but stripping the decimal part
-                                return stringFunction.apply(string.substring(0, string.indexOf('.')));
-                            } catch (NumberFormatException ignored) {}
+                            errorContainer.error(ErrorType.CUSTOM, "Could not parse '" + string + "' as a number");
+                            return null;
                         }
-                        errorContainer.error(ErrorType.CUSTOM, "Could not parse '" + string + "' as a number");
-                        return null;
                     })
                     .orElse(null);
         }
