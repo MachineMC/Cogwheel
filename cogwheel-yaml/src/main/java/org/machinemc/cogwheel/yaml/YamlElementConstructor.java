@@ -8,6 +8,8 @@ import org.snakeyaml.engine.v2.constructor.BaseConstructor;
 import org.snakeyaml.engine.v2.exceptions.*;
 import org.snakeyaml.engine.v2.nodes.*;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 
 public class YamlElementConstructor extends BaseConstructor {
@@ -45,6 +47,20 @@ public class YamlElementConstructor extends BaseConstructor {
         });
         tagConstructors.put(Tag.SEQ, new ConstructYamlSeq());
         tagConstructors.put(Tag.MAP, new ConstructYamlMap());
+        tagConstructors.put(YamlTags.BIG_INTEGER, node -> {
+            BigInteger value = new BigInteger(((ScalarNode) node).getValue());
+            YamlElement element = new YamlPrimitive(value);
+            if (settings.getParseComments())
+                applyComments(element, node);
+            return element;
+        });
+        tagConstructors.put(YamlTags.BIG_DECIMAL, node -> {
+            BigDecimal value = new BigDecimal(((ScalarNode) node).getValue());
+            YamlElement element = new YamlPrimitive(value);
+            if (settings.getParseComments())
+                applyComments(element, node);
+            return element;
+        });
     }
 
     protected void flattenMapping(MappingNode node) {

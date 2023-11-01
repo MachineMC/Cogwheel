@@ -13,6 +13,8 @@ import org.snakeyaml.engine.v2.nodes.Tag;
 import org.snakeyaml.engine.v2.representer.BaseRepresenter;
 import org.snakeyaml.engine.v2.scanner.StreamReader;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -41,6 +43,8 @@ public class YamlElementRepresenter extends BaseRepresenter {
                 case Byte b -> Tag.INT;
                 case Short s -> Tag.INT;
                 case Integer i -> Tag.INT;
+                case BigInteger bi -> YamlTags.BIG_INTEGER;
+                case BigDecimal bd -> YamlTags.BIG_DECIMAL;
                 case Number n -> Tag.FLOAT;
                 default -> throw new IllegalStateException("Unexpected value: " + element.asRawObject());
             };
