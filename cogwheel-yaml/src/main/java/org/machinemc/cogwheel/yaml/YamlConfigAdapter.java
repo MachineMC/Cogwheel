@@ -98,6 +98,11 @@ public class YamlConfigAdapter extends ConfigAdapter<YamlObject> {
     }
 
     @Override
+    public void setConfig(String key, YamlObject config) {
+        yamlObject.add(key, config.deepCopy());
+    }
+
+    @Override
     public void setComments(String key, String[] comments) {
         YamlElement element = yamlObject.get(key);
         if (element == null) return;

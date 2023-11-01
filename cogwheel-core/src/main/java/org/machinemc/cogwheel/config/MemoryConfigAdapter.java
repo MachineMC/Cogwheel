@@ -93,6 +93,11 @@ public class MemoryConfigAdapter extends ConfigAdapter<Map<String, Object>> {
     }
 
     @Override
+    public void setConfig(String key, Map<String, Object> config) {
+        setMap(key, Map.copyOf(config));
+    }
+
+    @Override
     public void setComments(String key, String[] comments) {}
 
     @Override

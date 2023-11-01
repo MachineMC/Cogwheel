@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * An annotation used to comment the lines above the config node.
- * <p><b>Note: This annotation will be ignored if the data format used doesn't support comments</p>
+ * <p><b>Note: This annotation will be ignored if the data format used doesn't support comments</b></p>
  * <p>For example:</p>
  * <pre><code>
  * &#064;Comment({"The username used to log in", "This key is required"})
@@ -37,7 +37,7 @@ public @interface Comment {
 
     /**
      * An annotation used to include inline comments within a config node.
-     * <p><b>Note: This annotation will be ignored if the data format used doesn't support inline comments</p>
+     * <p><b>Note: This annotation will be ignored if the data format used doesn't support inline comments</b></p>
      * <p>For example:</p>
      * <pre><code>
      * &#064;Comment.Inline("This is an inline comment")
@@ -49,7 +49,7 @@ public @interface Comment {
      * </pre>
      */
     @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.FIELD)
+    @Target({ElementType.FIELD, ElementType.RECORD_COMPONENT})
     @interface Inline {
 
         String value();

@@ -98,6 +98,11 @@ public class JSONConfigAdapter extends ConfigAdapter<JsonObject> {
     }
 
     @Override
+    public void setConfig(String key, JsonObject config) {
+        jsonObject.add(key, config.deepCopy());
+    }
+
+    @Override
     public void setComments(String key, String[] comments) { }
 
     @Override

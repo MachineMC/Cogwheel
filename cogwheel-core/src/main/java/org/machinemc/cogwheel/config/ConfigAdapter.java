@@ -62,6 +62,8 @@ public abstract class ConfigAdapter<T> {
 
     public abstract void setMap(String key, Map<String, Object> map);
 
+    public abstract void setConfig(String key, T config);
+
     public abstract void setComments(String key, String[] comments);
 
     public abstract void setInlineComment(String key, String comment);
@@ -83,8 +85,10 @@ public abstract class ConfigAdapter<T> {
             case Object[] array -> setArray(key, array);
             case Collection<?> collection -> setCollection(key, collection);
             case Map<?, ?> map -> setMap(key, (Map<String, Object>) map);
+            case ConfigAdapter<?> adapter -> setPrimitive(key, adapter.getConfig());
             default -> {
-                return false;
+                if (!getConfig().getClass().isInstance(object)) return false;
+                setConfig(key, (T) object);
             }
         }
         return true;
