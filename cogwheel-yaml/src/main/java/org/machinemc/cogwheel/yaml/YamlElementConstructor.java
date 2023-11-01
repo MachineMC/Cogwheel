@@ -1,5 +1,6 @@
 package org.machinemc.cogwheel.yaml;
 
+import org.machinemc.cogwheel.util.NumberUtils;
 import org.machinemc.cogwheel.yaml.wrapper.*;
 import org.snakeyaml.engine.v2.api.ConstructNode;
 import org.snakeyaml.engine.v2.api.LoadSettings;
@@ -32,35 +33,21 @@ public class YamlElementConstructor extends BaseConstructor {
             return element;
         });
         tagConstructors.put(Tag.INT, node -> {
-            Integer value = Integer.valueOf(((ScalarNode) node).getValue());
-            YamlElement element = new YamlPrimitive(value);
+            BigInteger number = NumberUtils.parseInteger(((ScalarNode) node).getValue());
+            YamlElement element = new YamlPrimitive(number);
             if (settings.getParseComments())
                 applyComments(element, node);
             return element;
         });
         tagConstructors.put(Tag.FLOAT, node -> {
-            Float value = Float.valueOf(((ScalarNode) node).getValue());
-            YamlElement element = new YamlPrimitive(value);
+            BigDecimal number = NumberUtils.parseDecimal(((ScalarNode) node).getValue());
+            YamlElement element = new YamlPrimitive(number);
             if (settings.getParseComments())
                 applyComments(element, node);
             return element;
         });
         tagConstructors.put(Tag.SEQ, new ConstructYamlSeq());
         tagConstructors.put(Tag.MAP, new ConstructYamlMap());
-        tagConstructors.put(YamlTags.BIG_INTEGER, node -> {
-            BigInteger value = new BigInteger(((ScalarNode) node).getValue());
-            YamlElement element = new YamlPrimitive(value);
-            if (settings.getParseComments())
-                applyComments(element, node);
-            return element;
-        });
-        tagConstructors.put(YamlTags.BIG_DECIMAL, node -> {
-            BigDecimal value = new BigDecimal(((ScalarNode) node).getValue());
-            YamlElement element = new YamlPrimitive(value);
-            if (settings.getParseComments())
-                applyComments(element, node);
-            return element;
-        });
     }
 
     protected void flattenMapping(MappingNode node) {

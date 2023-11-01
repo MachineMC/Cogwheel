@@ -40,12 +40,18 @@ public class YamlElementRepresenter extends BaseRepresenter {
             Tag tag = switch (element.asRawObject()) {
                 case Boolean b -> Tag.BOOL;
                 case String s -> Tag.STR;
+
                 case Byte b -> Tag.INT;
                 case Short s -> Tag.INT;
                 case Integer i -> Tag.INT;
-                case BigInteger bi -> YamlTags.BIG_INTEGER;
-                case BigDecimal bd -> YamlTags.BIG_DECIMAL;
-                case Number n -> Tag.FLOAT;
+                case Long l -> Tag.INT;
+
+                case Float f -> Tag.FLOAT;
+                case Double d -> Tag.FLOAT;
+
+                case BigInteger bi -> Tag.INT;
+                case BigDecimal bd -> Tag.FLOAT;
+
                 default -> throw new IllegalStateException("Unexpected value: " + element.asRawObject());
             };
 
