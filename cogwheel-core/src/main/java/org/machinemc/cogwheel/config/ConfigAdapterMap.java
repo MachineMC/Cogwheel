@@ -7,6 +7,7 @@ import java.util.*;
 public class ConfigAdapterMap extends AbstractMap<String, Object> {
 
     private final ConfigAdapter<?> adapter;
+    private transient Set<Map.Entry<String, Object>> entrySet;
 
     public ConfigAdapterMap(ConfigAdapter<?> adapter) {
         this.adapter = adapter;
@@ -40,7 +41,8 @@ public class ConfigAdapterMap extends AbstractMap<String, Object> {
 
     @Override
     public @NotNull Set<Map.Entry<String, Object>> entrySet() {
-        return new AbstractSet<>() {
+        if (entrySet != null) return entrySet;
+        return entrySet = new AbstractSet<>() {
 
             private final Set<String> keys = keySet();
 
@@ -61,10 +63,11 @@ public class ConfigAdapterMap extends AbstractMap<String, Object> {
             }
 
             @Override
-            public Iterator<Map.Entry<String, Object>> iterator() {
+            public @NotNull Iterator<Map.Entry<String, Object>> iterator() {
                 return new Iterator<>() {
 
                     private final Iterator<String> iterator = keys.iterator();
+                    private String lastKey;
 
                     @Override
                     public boolean hasNext() {
@@ -73,7 +76,14 @@ public class ConfigAdapterMap extends AbstractMap<String, Object> {
 
                     @Override
                     public Map.Entry<String, Object> next() {
-                        return new Entry(iterator.next());
+                        lastKey = iterator.next();
+                        return new Entry(lastKey);
+                    }
+
+                    @Override
+                    public void remove() {
+                        if (lastKey == null) throw new IllegalStateException();
+                        ConfigAdapterMap.this.remove(lastKey);
                     }
 
                 };
