@@ -1,5 +1,7 @@
 package org.machinemc.cogwheel.properties;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -7,9 +9,9 @@ import java.util.stream.Collectors;
 
 public class CommentedProperties extends Properties {
 
-    private final Map<String, String[]> comments = new ConcurrentHashMap<>();
+    private final Map<String, @Nullable String[]> comments = new ConcurrentHashMap<>();
 
-    public void setComment(String key, String[] value) {
+    public void setComments(String key, @Nullable String[] value) {
         comments.put(key, value);
     }
 
@@ -18,7 +20,6 @@ public class CommentedProperties extends Properties {
     }
 
     public void store(Writer writer,
-                      String[] topComments,
                       boolean semicolonSeparator,
                       boolean exclamationMarkComments,
                       boolean spacesBetweenSeparator,
@@ -33,15 +34,13 @@ public class CommentedProperties extends Properties {
             separator = spacesBetweenSeparator ? " = " : "=";
         }
 
-        if (topComments != null) {
-            for (String comment : topComments) writer.write(commentChar + " " + comment + "\n");
-            writer.write("\n");
-        }
-
         for (String key : keys) {
             String[] comments = this.comments.get(key);
             if (comments != null) {
-                for (String comment : comments) writer.write(commentChar + " " + comment + "\n");
+                for (String comment : comments) {
+                    String commentLine = comment == null ? "" : commentChar + " " + comment;
+                    writer.write(commentLine + "\n");
+                }
             }
             writer.write(key);
             writer.write(separator);
@@ -53,12 +52,11 @@ public class CommentedProperties extends Properties {
     }
 
     public void store(OutputStream os,
-                      String[] topComments,
                       boolean semicolonSeparator,
                       boolean exclamationMarkComments,
                       boolean spacesBetweenSeparator,
                       boolean emptyLineBetweenEntries) throws IOException {
-        store(new OutputStreamWriter(os), topComments, semicolonSeparator, exclamationMarkComments, spacesBetweenSeparator, emptyLineBetweenEntries);
+        store(new OutputStreamWriter(os), semicolonSeparator, exclamationMarkComments, spacesBetweenSeparator, emptyLineBetweenEntries);
     }
 
     private static String saveConvert(String string) {

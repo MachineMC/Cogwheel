@@ -1,5 +1,6 @@
 package org.machinemc.cogwheel.json;
 
+import org.jetbrains.annotations.Nullable;
 import org.machinemc.cogwheel.config.ConfigAdapter;
 import com.google.gson.*;
 
@@ -103,7 +104,7 @@ public class JSONConfigAdapter extends ConfigAdapter<JsonObject> {
     }
 
     @Override
-    public void setComments(String key, String[] comments) { }
+    public void setComments(String key, @Nullable String[] comments) { }
 
     @Override
     public void setInlineComment(String key, String comment) { }

@@ -1,5 +1,6 @@
 package org.machinemc.cogwheel.properties;
 
+import org.jetbrains.annotations.Nullable;
 import org.machinemc.cogwheel.config.ConfigAdapter;
 import org.machinemc.cogwheel.util.NumberUtils;
 
@@ -109,8 +110,8 @@ public class PropertiesConfigAdapter extends ConfigAdapter<CommentedProperties> 
     }
 
     @Override
-    public void setComments(String key, String[] comments) {
-        properties.setComment(key, comments);
+    public void setComments(String key, @Nullable String[] comments) {
+        properties.setComments(key, comments);
     }
 
     @Override

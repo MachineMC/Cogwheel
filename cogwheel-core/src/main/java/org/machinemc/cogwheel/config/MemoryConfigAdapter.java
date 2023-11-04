@@ -1,5 +1,7 @@
 package org.machinemc.cogwheel.config;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -98,7 +100,7 @@ public class MemoryConfigAdapter extends ConfigAdapter<Map<String, Object>> {
     }
 
     @Override
-    public void setComments(String key, String[] comments) {}
+    public void setComments(String key, @Nullable String[] comments) {}
 
     @Override
     public void setInlineComment(String key, String comment) {}

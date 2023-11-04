@@ -541,7 +541,10 @@ public class Serializers {
                 }
                 String[] comments = node.getComments();
                 String inlineComment = node.getInlineComment();
-                if (comments != null) configAdapter.setComments(node.getFormattedName(), comments);
+                if (comments != null) {
+                    for (int i = 0; i < comments.length; i++) if (comments[i].isEmpty()) comments[i] = null;
+                    configAdapter.setComments(node.getFormattedName(), comments);
+                }
                 if (inlineComment != null) configAdapter.setInlineComment(node.getFormattedName(), inlineComment);
             });
             visitor.writeConfig(configAdapter);

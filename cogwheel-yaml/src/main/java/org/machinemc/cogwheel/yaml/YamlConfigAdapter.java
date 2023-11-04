@@ -1,5 +1,6 @@
 package org.machinemc.cogwheel.yaml;
 
+import org.jetbrains.annotations.Nullable;
 import org.machinemc.cogwheel.config.ConfigAdapter;
 import org.machinemc.cogwheel.yaml.wrapper.*;
 
@@ -103,17 +104,21 @@ public class YamlConfigAdapter extends ConfigAdapter<YamlObject> {
     }
 
     @Override
-    public void setComments(String key, String[] comments) {
+    public void setComments(String key, @Nullable String[] comments) {
         YamlElement element = yamlObject.get(key);
         if (element == null) return;
+        for (int i = 0; i < comments.length; i++) {
+            if (comments[i] == null) continue;
+            comments[i] = " " + comments[i];
+        }
         element.setComments(comments);
     }
 
     @Override
     public void setInlineComment(String key, String comment) {
         YamlElement element = yamlObject.get(key);
-        if (element == null) return;;
-        element.setInlineComment(comment);
+        if (element == null) return;
+        element.setInlineComment(" " + comment);
     }
 
     @Override

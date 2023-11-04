@@ -9,7 +9,6 @@ import org.machinemc.cogwheel.serialization.SerializerRegistry;
 import org.machinemc.cogwheel.serialization.*;
 
 import java.io.File;
-import java.util.LinkedHashMap;
 
 public abstract class ConfigSerializer<T> {
 

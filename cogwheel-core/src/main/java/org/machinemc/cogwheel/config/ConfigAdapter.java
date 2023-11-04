@@ -1,5 +1,6 @@
 package org.machinemc.cogwheel.config;
 
+import org.jetbrains.annotations.Nullable;
 import org.machinemc.cogwheel.util.ArrayUtils;
 
 import java.util.*;
@@ -64,7 +65,7 @@ public abstract class ConfigAdapter<T> {
 
     public abstract void setConfig(String key, T config);
 
-    public abstract void setComments(String key, String[] comments);
+    public abstract void setComments(String key, @Nullable String[] comments);
 
     public abstract void setInlineComment(String key, String comment);
 

@@ -10,7 +10,7 @@ import java.util.*;
 
 public sealed abstract class YamlElement permits YamlArray, YamlNull, YamlObject, YamlPrimitive {
 
-    private String @Nullable [] comments;
+    private @Nullable String @Nullable [] comments;
     private @Nullable String inlineComment;
 
     public abstract YamlElement deepCopy();
@@ -107,12 +107,15 @@ public sealed abstract class YamlElement permits YamlArray, YamlNull, YamlObject
     public List<CommentLine> getComments() {
         if (comments == null) return Collections.emptyList();
         return Arrays.stream(comments)
-                .filter(Objects::nonNull)
-                .map(comment -> new CommentLine(Optional.empty(), Optional.empty(), comment, CommentType.BLOCK))
+                .map(comment -> {
+                    if (comment == null)
+                        return new CommentLine(Optional.empty(), Optional.empty(), "", CommentType.BLANK_LINE);
+                    return new CommentLine(Optional.empty(), Optional.empty(), comment, CommentType.BLOCK);
+                })
                 .toList();
     }
 
-    public void setComments(String @Nullable [] comments) {
+    public void setComments(@Nullable String @Nullable [] comments) {
         this.comments = comments;
     }
 

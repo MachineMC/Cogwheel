@@ -5,6 +5,7 @@ import org.machinemc.cogwheel.yaml.wrapper.*;
 import org.snakeyaml.engine.v2.api.ConstructNode;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 import org.snakeyaml.engine.v2.comments.CommentLine;
+import org.snakeyaml.engine.v2.comments.CommentType;
 import org.snakeyaml.engine.v2.constructor.BaseConstructor;
 import org.snakeyaml.engine.v2.exceptions.*;
 import org.snakeyaml.engine.v2.nodes.*;
@@ -132,7 +133,9 @@ public class YamlElementConstructor extends BaseConstructor {
             map.forEach((key, value) -> {
                 YamlPrimitive yamlKey = (YamlPrimitive) key;
                 YamlElement yamlValue = (YamlElement) value;
-                yamlValue.setComments(yamlKey.getComments().stream().map(CommentLine::getValue).toArray(String[]::new));
+                yamlValue.setComments(yamlKey.getComments().stream()
+                        .map(commentLine -> commentLine.getCommentType() == CommentType.BLANK_LINE ? null : commentLine.getValue())
+                        .toArray(String[]::new));
                 yamlObject.add(yamlKey.getAsString(), yamlValue);
             });
             if (settings.getParseComments())
@@ -159,7 +162,9 @@ public class YamlElementConstructor extends BaseConstructor {
 
     private void applyBlockComments(YamlElement element, Node node) {
         if (node.getBlockComments() == null || node.getBlockComments().isEmpty()) return;
-        element.setComments(node.getBlockComments().stream().map(CommentLine::getValue).toArray(String[]::new));
+        element.setComments(node.getBlockComments().stream()
+                .map(commentLine -> commentLine.getCommentType() == CommentType.BLANK_LINE ? null : commentLine.getValue())
+                .toArray(String[]::new));
     }
 
     private void applyInlineComments(YamlElement element, Node node) {
