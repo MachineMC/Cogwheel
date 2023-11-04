@@ -18,11 +18,12 @@ public non-sealed class YamlObject extends YamlElement {
         for (Map.Entry<String, YamlElement> entry : members.entrySet()) {
             result.add(entry.getKey(), entry.getValue().deepCopy());
         }
+        copyComments(result);
         return result;
     }
 
     @Override
-    public Object asRawObject() {
+    public Map<String, Object> asRawObject() {
         Map<String, Object> map = new LinkedHashMap<>();
         for (Map.Entry<String, YamlElement> entry : members.entrySet())
             map.put(entry.getKey(), entry.getValue().asRawObject());
@@ -30,7 +31,7 @@ public non-sealed class YamlObject extends YamlElement {
     }
 
     public void add(String property, YamlElement value) {
-        members.put(property, value == null ? YamlNull.INSTANCE : value);
+        members.put(property, value == null ? new YamlNull() : value);
     }
 
     public YamlElement remove(String property) {
@@ -38,19 +39,19 @@ public non-sealed class YamlObject extends YamlElement {
     }
 
     public void addProperty(String property, String value) {
-        add(property, value == null ? YamlNull.INSTANCE : new YamlPrimitive(value));
+        add(property, value == null ? new YamlNull() : new YamlPrimitive(value));
     }
 
     public void addProperty(String property, Number value) {
-        add(property, value == null ? YamlNull.INSTANCE : new YamlPrimitive(value));
+        add(property, value == null ? new YamlNull() : new YamlPrimitive(value));
     }
 
     public void addProperty(String property, Boolean value) {
-        add(property, value == null ? YamlNull.INSTANCE : new YamlPrimitive(value));
+        add(property, value == null ? new YamlNull() : new YamlPrimitive(value));
     }
 
     public void addProperty(String property, Character value) {
-        add(property, value == null ? YamlNull.INSTANCE : new YamlPrimitive(value));
+        add(property, value == null ? new YamlNull() : new YamlPrimitive(value));
     }
 
     public Set<Map.Entry<String, YamlElement>> entrySet() {
@@ -101,6 +102,12 @@ public non-sealed class YamlObject extends YamlElement {
     @Override
     public int hashCode() {
         return members.hashCode();
+    }
+
+    public static YamlObject of(Map<String, ?> map) {
+        YamlObject yamlObject = new YamlObject();
+        map.forEach((key, value) -> yamlObject.add(key, YamlElement.of(value)));
+        return yamlObject;
     }
 
 }

@@ -30,27 +30,28 @@ public final class YamlArray extends YamlElement implements Iterable<YamlElement
         YamlArray result = new YamlArray(elements.size());
         for (YamlElement element : elements)
             result.add(element.deepCopy());
+        copyComments(result);
         return result;
     }
 
     public void add(Boolean bool) {
-        elements.add(bool == null ? YamlNull.INSTANCE : new YamlPrimitive(bool));
+        elements.add(bool == null ? new YamlNull() : new YamlPrimitive(bool));
     }
 
     public void add(Character character) {
-        elements.add(character == null ? YamlNull.INSTANCE : new YamlPrimitive(character));
+        elements.add(character == null ? new YamlNull() : new YamlPrimitive(character));
     }
 
     public void add(Number number) {
-        elements.add(number == null ? YamlNull.INSTANCE : new YamlPrimitive(number));
+        elements.add(number == null ? new YamlNull() : new YamlPrimitive(number));
     }
 
     public void add(String string) {
-        elements.add(string == null ? YamlNull.INSTANCE : new YamlPrimitive(string));
+        elements.add(string == null ? new YamlNull() : new YamlPrimitive(string));
     }
 
     public void add(YamlElement element) {
-        if (element == null) element = YamlNull.INSTANCE;
+        if (element == null) element = new YamlNull();
         elements.add(element);
     }
 
@@ -59,7 +60,7 @@ public final class YamlArray extends YamlElement implements Iterable<YamlElement
     }
 
     public YamlElement set(int index, YamlElement element) {
-        return elements.set(index, element == null ? YamlNull.INSTANCE : element);
+        return elements.set(index, element == null ? new YamlNull() : element);
     }
 
     public boolean remove(YamlElement element) {
@@ -148,7 +149,7 @@ public final class YamlArray extends YamlElement implements Iterable<YamlElement
     }
 
     @Override
-    public Object asRawObject() {
+    public Object[] asRawObject() {
         Object[] array = new Object[elements.size()];
         for (int i = 0; i < array.length; i++)
             array[i] = elements.get(i).asRawObject();
@@ -168,6 +169,13 @@ public final class YamlArray extends YamlElement implements Iterable<YamlElement
     @Override
     public int hashCode() {
         return elements.hashCode();
+    }
+
+    public static YamlArray of(Object[] array) {
+        YamlArray yamlArray = new YamlArray(array.length);
+        for (Object object : array)
+            yamlArray.add(YamlElement.of(object));
+        return yamlArray;
     }
 
 }

@@ -9,24 +9,30 @@ public final class YamlPrimitive extends YamlElement {
     private final Object value;
 
     public YamlPrimitive(Boolean bool) {
-        value = Objects.requireNonNull(bool);
+        this((Object) bool);
     }
 
     public YamlPrimitive(Number number) {
-        value = Objects.requireNonNull(number);
+        this((Object) number);
     }
 
     public YamlPrimitive(String string) {
-        value = Objects.requireNonNull(string);
+        this((Object) string);
     }
 
     public YamlPrimitive(Character c) {
-        value = Objects.requireNonNull(c).toString();
+        this(Objects.requireNonNull(c).toString());
+    }
+
+    private YamlPrimitive(Object object) {
+        value = Objects.requireNonNull(object);
     }
 
     @Override
     public YamlPrimitive deepCopy() {
-        return this;
+        YamlPrimitive result = new YamlPrimitive(value);
+        copyComments(result);
+        return result;
     }
 
     public boolean isBoolean() {
@@ -114,7 +120,7 @@ public final class YamlPrimitive extends YamlElement {
         if (value == null) {
             return 31;
         }
-        // Using recommended hashing algorithm from Effective Java for longs and doubles
+        // Using the recommended hashing algorithm from Effective Java for longs and doubles
         if (isIntegral(this)) {
             long value = getAsNumber().longValue();
             return (int) (value ^ (value >>> 32));
@@ -155,6 +161,21 @@ public final class YamlPrimitive extends YamlElement {
                     || number instanceof Short || number instanceof Byte;
         }
         return false;
+    }
+
+    private static boolean isPrimitive(Object object) {
+        return switch (object) {
+            case Boolean b -> true;
+            case Character c -> true;
+            case Number n -> true;
+            case String s -> true;
+            default -> false;
+        };
+    }
+
+    public static YamlPrimitive of(Object primitive) {
+        if (!isPrimitive(primitive)) throw new IllegalArgumentException(primitive + " is not a primitive value");
+        return new YamlPrimitive(primitive);
     }
 
 }

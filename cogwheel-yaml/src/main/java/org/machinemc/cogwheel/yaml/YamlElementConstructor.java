@@ -18,7 +18,12 @@ public class YamlElementConstructor extends BaseConstructor {
     public YamlElementConstructor(LoadSettings settings) {
         super(settings);
 
-        tagConstructors.put(Tag.NULL, node -> YamlNull.INSTANCE);
+        tagConstructors.put(Tag.NULL, node -> {
+            YamlElement element = new YamlNull();
+            if (settings.getParseComments())
+                applyComments(element, node);
+            return element;
+        });
         tagConstructors.put(Tag.BOOL, node -> {
             Boolean value = Boolean.valueOf(((ScalarNode) node).getValue());
             YamlElement element = new YamlPrimitive(value);

@@ -20,7 +20,7 @@ public final class NumberUtils {
 
     @Contract("null -> fail")
     public static BigInteger parseInteger(String string) throws NumberFormatException {
-        return new BigInteger(string);
+        return isInteger(string) ? new BigInteger(string) : parseDecimal(string).toBigInteger();
     }
 
     @Contract("null -> fail")

@@ -15,6 +15,13 @@ public sealed abstract class YamlElement permits YamlArray, YamlNull, YamlObject
 
     public abstract YamlElement deepCopy();
 
+    protected void copyComments(YamlElement destination) {
+        if (comments != null)
+            destination.comments = Arrays.copyOf(comments, comments.length);
+        if (inlineComment != null)
+            destination.inlineComment = inlineComment; // Strings are immutable, no need to clone it
+    }
+
     public boolean isYamlArray() {
         return this instanceof YamlArray;
     }
@@ -116,6 +123,14 @@ public sealed abstract class YamlElement permits YamlArray, YamlNull, YamlObject
 
     public void setInlineComment(@Nullable String comment) {
         this.inlineComment = comment;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static YamlElement of(Object object) {
+        if (object == null) return new YamlNull();
+        if (object.getClass().isArray()) return YamlArray.of((Object[]) object);
+        if (object instanceof Map<?, ?> map) return YamlObject.of((Map<String, ?>) map);
+        return YamlPrimitive.of(object);
     }
 
 }
