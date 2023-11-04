@@ -1,8 +1,8 @@
 package org.machinemc.cogwheel.properties;
 
 import org.machinemc.cogwheel.config.ConfigAdapter;
+import org.machinemc.cogwheel.util.NumberUtils;
 
-import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,9 +31,9 @@ public class PropertiesConfigAdapter extends ConfigAdapter<CommentedProperties> 
         Object o = properties.get(key);
         if (o instanceof Number n) return Optional.of(n);
         try {
-            Number n = new BigDecimal(o.toString());
-            properties.put(key, n);
-            return Optional.of(n);
+            Number number = NumberUtils.parse(o.toString());
+            properties.put(key, number);
+            return Optional.of(number);
         } catch (Exception exception) {
             return Optional.empty();
         }
@@ -51,7 +51,11 @@ public class PropertiesConfigAdapter extends ConfigAdapter<CommentedProperties> 
         Object o = properties.get(key);
         if (o instanceof Boolean b) return Optional.of(b);
         try {
-            Boolean b = Boolean.parseBoolean(o.toString());
+            Boolean b = switch (o.toString().toLowerCase(Locale.ENGLISH)) {
+                case "true" -> true;
+                case "false" -> false;
+                default -> throw new IllegalArgumentException(o + " isn't a valid boolean");
+            };
             properties.put(key, b);
             return Optional.of(b);
         } catch (Exception exception) {

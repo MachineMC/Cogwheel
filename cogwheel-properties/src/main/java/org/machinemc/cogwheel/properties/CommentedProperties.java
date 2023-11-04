@@ -26,8 +26,12 @@ public class CommentedProperties extends Properties {
 
         Set<String> keys = keySet().stream().map(String::valueOf).collect(Collectors.toSet());
         char commentChar = exclamationMarkComments ? '!' : '#';
-        char separatorChar = semicolonSeparator ? ':' : '=';
-        String separator = spacesBetweenSeparator ? " " + separatorChar + " " : String.valueOf(separatorChar);
+        String separator;
+        if (semicolonSeparator) {
+            separator = spacesBetweenSeparator ? ": " : ":";
+        } else {
+            separator = spacesBetweenSeparator ? " = " : "=";
+        }
 
         if (topComments != null) {
             for (String comment : topComments) writer.write(commentChar + " " + comment + "\n");
@@ -61,107 +65,39 @@ public class CommentedProperties extends Properties {
         return saveConvert(string, false, true);
     }
 
-    private static String loadConvert(String converted) {
-        char[] chars = converted.toCharArray();
-        return loadConvert(chars, 0, chars.length, new StringBuilder());
-    }
-
-    private static String loadConvert(char[] in, int off, int len, StringBuilder out) {
-        char aChar;
-        int end = off + len;
-        int start = off;
-        while (off < end) {
-            aChar = in[off++];
-            if (aChar == '\\') {
-                break;
-            }
-        }
-        if (off == end) {
-            return new String(in, start, len);
-        }
-        out.setLength(0);
-        off--;
-        out.append(in, start, off - start);
-
-        while (off < end) {
-            aChar = in[off++];
-            if (aChar == '\\') {
-                aChar = in[off++];
-                if(aChar == 'u') {
-                    // Read the xxxx
-                    if (off > end - 4)
-                        throw new IllegalArgumentException(
-                                "Malformed \\uxxxx encoding.");
-                    int value = 0;
-                    for (int i = 0; i < 4; i++) {
-                        aChar = in[off++];
-                        value = switch (aChar) {
-                            case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> (value << 4) + aChar - '0';
-                            case 'a', 'b', 'c', 'd', 'e', 'f'                     -> (value << 4) + 10 + aChar - 'a';
-                            case 'A', 'B', 'C', 'D', 'E', 'F'                     -> (value << 4) + 10 + aChar - 'A';
-                            default -> throw new IllegalArgumentException("Malformed \\uxxxx encoding.");
-                        };
-                    }
-                    out.append((char)value);
-                } else {
-                    if (aChar == 't') aChar = '\t';
-                    else if (aChar == 'r') aChar = '\r';
-                    else if (aChar == 'n') aChar = '\n';
-                    else if (aChar == 'f') aChar = '\f';
-                    out.append(aChar);
-                }
-            } else {
-                out.append(aChar);
-            }
-        }
-        return out.toString();
-    }
-
-    private static String saveConvert(String theString, boolean escapeSpace, boolean escapeUnicode) {
-        int len = theString.length();
-        int bufLen = len * 2;
-        if (bufLen < 0) {
-            bufLen = Integer.MAX_VALUE;
-        }
-        StringBuilder outBuffer = new StringBuilder(bufLen);
-        HexFormat hex = HexFormat.of().withUpperCase();
-        for(int x=0; x<len; x++) {
-            char aChar = theString.charAt(x);
-            if ((aChar > 61) && (aChar < 127)) {
+    private static String saveConvert(String string, boolean escapeSpace, boolean escapeUnicode) {
+        int length = string.length();
+        int bufferLength = length * 2;
+        if (bufferLength < 0) bufferLength = Integer.MAX_VALUE;
+        StringBuilder outBuffer = new StringBuilder(bufferLength);
+        for (int i = 0; i < length; i++) {
+            char aChar = string.charAt(i);
+            if (aChar > 0x3D && aChar < 0x7F) {
                 if (aChar == '\\') {
-                    outBuffer.append('\\'); outBuffer.append('\\');
+                    outBuffer.append("\\\\");
                     continue;
                 }
                 outBuffer.append(aChar);
                 continue;
             }
-            switch(aChar) {
-                case ' ':
-                    if (x == 0 || escapeSpace)
+            switch (aChar) {
+                case ' ' -> {
+                    if (i == 0 || escapeSpace)
                         outBuffer.append('\\');
                     outBuffer.append(' ');
-                    break;
-                case '\t':outBuffer.append('\\'); outBuffer.append('t');
-                    break;
-                case '\n':outBuffer.append('\\'); outBuffer.append('n');
-                    break;
-                case '\r':outBuffer.append('\\'); outBuffer.append('r');
-                    break;
-                case '\f':outBuffer.append('\\'); outBuffer.append('f');
-                    break;
-                case '=':
-                case ':':
-                case '#':
-                case '!':
-                    outBuffer.append('\\'); outBuffer.append(aChar);
-                    break;
-                default:
-                    if (((aChar < 0x0020) || (aChar > 0x007e)) & escapeUnicode ) {
-                        outBuffer.append("\\u");
-                        outBuffer.append(hex.toHexDigits(aChar));
+                }
+                case '\t' -> outBuffer.append("\\t");
+                case '\n' -> outBuffer.append("\\n");
+                case '\r' -> outBuffer.append("\\r");
+                case '\f' -> outBuffer.append("\\f");
+                case '=', ':', '#', '!' -> outBuffer.append('\\').append(aChar);
+                default -> {
+                    if ((0x20 > aChar || aChar > 0x7E) && escapeUnicode) {
+                        outBuffer.append("\\u%04X".formatted((int) aChar));
                     } else {
                         outBuffer.append(aChar);
                     }
+                }
             }
         }
         return outBuffer.toString();
