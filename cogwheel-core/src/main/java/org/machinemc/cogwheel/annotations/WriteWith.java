@@ -11,6 +11,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.RECORD_COMPONENT})
 public @interface WriteWith {
 
-    Class<? extends Serializer<?>> value();
+    @SuppressWarnings("rawtypes")
+    Class<? extends Serializer> value();
 
 }
