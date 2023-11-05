@@ -1,5 +1,6 @@
 package org.machinemc.cogwheel.util.error;
 
+import org.jetbrains.annotations.Nullable;
 import org.machinemc.cogwheel.serialization.SerializerContext;
 import org.jetbrains.annotations.NotNull;
 import org.machinemc.cogwheel.ErrorHandler;
@@ -10,7 +11,16 @@ import java.util.List;
 
 public class ErrorContainer implements Iterable<ErrorEntry> {
 
+    private final @Nullable ErrorContainer parent;
     private final List<ErrorEntry> entries = new ArrayList<>();
+
+    public ErrorContainer() {
+        this(null);
+    }
+
+    public ErrorContainer(@Nullable ErrorContainer parent) {
+        this.parent = parent;
+    }
 
     public void error(String message) {
         error(ErrorType.CUSTOM, message);
@@ -22,6 +32,8 @@ public class ErrorContainer implements Iterable<ErrorEntry> {
 
     public void error(ErrorEntry entry) {
         entries.add(entry);
+        if (parent != null)
+            parent.error(entry);
     }
 
     public void handleErrors(SerializerContext context) {
@@ -35,10 +47,6 @@ public class ErrorContainer implements Iterable<ErrorEntry> {
 
     public boolean hasErrors() {
         return !entries.isEmpty();
-    }
-
-    public void merge(ErrorContainer other) {
-        entries.addAll(other.entries);
     }
 
     @Override

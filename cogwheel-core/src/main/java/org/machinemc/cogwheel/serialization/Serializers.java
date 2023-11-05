@@ -32,7 +32,10 @@ public class Serializers {
     public static <T extends Serializer<?>> T newSerializer(Class<T> serializerClass, SerializerContext context) {
         if (JavaUtils.hasConstructor(serializerClass, SerializerContext.class))
             return JavaUtils.newInstance(serializerClass, ArrayUtils.array(SerializerContext.class), context);
-        return JavaUtils.newInstance(serializerClass);
+        if (JavaUtils.hasConstructor(serializerClass))
+            return JavaUtils.newInstance(serializerClass);
+        throw new IllegalArgumentException("Cannot instantiate serializer '" + serializerClass + "'. " +
+                "No appropriate constructor found");
     }
 
     private static AnnotatedType[] validateParameterTypes(AnnotatedType[] parameters) {
@@ -41,28 +44,29 @@ public class Serializers {
         return parameters;
     }
 
-    private static void validateParameterType(AnnotatedType parameter) {
+    private static AnnotatedType validateParameterType(AnnotatedType parameter) {
         switch (parameter.getType()) {
             case Class<?> ignore -> {}
             case ParameterizedType ignore -> {}
             case GenericArrayType ignore -> {}
             default -> throw new UnsupportedOperationException("Cannot serialize type '" + parameter + "'");
         }
+        return parameter;
     }
 
-    private static Object deserialize(Serializer<?> deserializer, Object primitive, ErrorContainer errorContainer, Class<?> as) {
-        ErrorContainer temp = new ErrorContainer();
-        Object deserialized = deserializer != null ? Serializer.deserialize(deserializer, primitive, temp) : primitive;
-        if (deserialized == null && !temp.hasErrors()) {
-            assert primitive != null;
-            temp.error(ErrorType.MISMATCHED_TYPES, "Could not deserialize (%s) '%s' as %s".formatted(
+    private static <T> T deserialize(Serializer<T> deserializer, Object primitive, Class<T> as, ErrorContainer errorContainer) {
+        if (primitive == null) return null;
+        ErrorContainer childContainer = new ErrorContainer(errorContainer);
+        Object deserialized = deserializer != null ? Serializer.deserialize(deserializer, primitive, childContainer) : primitive;
+        if (!as.isInstance(primitive) && deserialized == null && !childContainer.hasErrors()) {
+            childContainer.error(ErrorType.MISMATCHED_TYPES, "Could not deserialize (%s) '%s' as %s".formatted(
                     primitive.getClass().getSimpleName(),
                     JavaUtils.toString(primitive),
                     as.getSimpleName())
             );
+            return null;
         }
-        errorContainer.merge(temp);
-        return deserialized;
+        return as.cast(deserialized);
     }
 
     public static class NumberSerializer<N extends Number> implements Serializer<N> {
@@ -245,31 +249,32 @@ public class Serializers {
     public static class CollectionSerializer<C extends Collection<T>, T> implements Serializer<C> {
 
         private final IntFunction<C> factory;
-        private final @Nullable Serializer<T> serializer;
+        private final SerializerContext context;
 
         public CollectionSerializer(IntFunction<C> factory, SerializerContext context) {
-            this.factory = factory;
             AnnotatedParameterizedType type = (AnnotatedParameterizedType) context.annotatedType();
-            AnnotatedType argument = validateParameterTypes(type.getAnnotatedActualTypeArguments())[0];
-            SerializerRegistry registry = context.registry();
-            this.serializer = registry.getSerializer(JavaUtils.asClass(argument), context.withType(argument));
+            AnnotatedType argument = validateParameterType(type.getAnnotatedActualTypeArguments()[0]);
+            this.factory = factory;
+            this.context = context.withType(argument);
         }
 
         @Override
         public void serialize(C collection, DataVisitor visitor) {
+            Serializer<T> serializer = context.writeWith();
             visitor.writeArray(collection.stream()
                     .map(object -> serializer != null ? Serializer.serialize(serializer, object) : object)
                     .toArray());
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public @Nullable C deserialize(DataVisitor visitor, ErrorContainer errorContainer) {
+            Class<T> type = JavaUtils.asClass(context.type());
+            Serializer<T> deserializer = context.readWith();
             return visitor.readArray()
                     .map(array -> {
                         C collection = factory.apply(array.length);
                         for (Object primitive : array) {
-                            T object = serializer == null ? (T) primitive : Serializer.deserialize(serializer, primitive, errorContainer);
+                            T object = Serializers.deserialize(deserializer, primitive, type, errorContainer);
                             collection.add(object);
                         }
                         return collection;
@@ -282,7 +287,7 @@ public class Serializers {
     public static class MapSerializer<K, V> implements Serializer<Map<K, V>> {
 
         private final Class<K> keyType;
-        private final @Nullable Serializer<V> serializer;
+        private final SerializerContext context;
 
         @SuppressWarnings("unchecked")
         public MapSerializer(SerializerContext context) {
@@ -294,15 +299,14 @@ public class Serializers {
                         Enum.class.getTypeName(),
                         parameters[0].getType().getTypeName()
                 ));
-            SerializerRegistry registry = context.registry();
-            context = context.withType(parameters[1]);
             this.keyType = (Class<K>) keyClass;
-            this.serializer = registry.getSerializer(JavaUtils.asClass(parameters[1]), context);
+            this.context = context.withType(parameters[1]);
         }
 
         @Override
         public void serialize(Map<K, V> map, DataVisitor visitor) {
             Map<String, Object> serializedMap = HashMap.newHashMap(map.size());
+            Serializer<V> serializer = context.writeWith();
             map.forEach((key, value) -> {
                 Object serialized = serializer != null ? Serializer.serialize(serializer, value) : value;
                 serializedMap.put((key + "").toLowerCase(Locale.ENGLISH), serialized);
@@ -316,6 +320,8 @@ public class Serializers {
             Map<String, Object> serialized = visitor.readMap().orElse(null);
             if (serialized == null) return null;
             Map<K, V> map = LinkedHashMap.newLinkedHashMap(serialized.size());
+            Class<V> valueType = JavaUtils.asClass(context.type());
+            Serializer<V> deserializer = context.readWith();
             serialized.forEach((key, value) -> {
                 K actualKey;
                 if (keyType.isEnum()) {
@@ -325,7 +331,7 @@ public class Serializers {
                 } else {
                     throw new UnsupportedOperationException("Cannot deserialize key of type: " + keyType.getTypeName());
                 }
-                map.put(actualKey, serializer == null ? (V) value : Serializer.deserialize(serializer, value, errorContainer));
+                map.put(actualKey, Serializers.deserialize(deserializer, value, valueType, errorContainer));
             });
             return map;
         }
@@ -336,23 +342,19 @@ public class Serializers {
 
         private final Class<T[]> arrayType;
         private final IntFunction<T[]> arrayFactory;
-        private final @Nullable Serializer<T> serializer;
-
-        public ArraySerializer(SerializerContext context) {
-            this(context, (AnnotatedArrayType) context.annotatedType());
-        }
+        private final SerializerContext context;
 
         @SuppressWarnings("unchecked")
-        private ArraySerializer(SerializerContext context, AnnotatedArrayType type) {
-            SerializerRegistry registry = context.registry();
-            context = context.withType(type.getAnnotatedGenericComponentType());
+        public ArraySerializer(SerializerContext context) {
+            AnnotatedArrayType type = (AnnotatedArrayType) context.annotatedType();
             this.arrayType = JavaUtils.asClass(type);
-            this.serializer = registry.getSerializer((Class<T>) arrayType.componentType(), context);
             this.arrayFactory = length -> (T[]) ArrayUtils.newArrayInstance(arrayType.componentType(), length);
+            this.context = context.withType(type.getAnnotatedGenericComponentType());
         }
 
         @Override
         public void serialize(T[] array, DataVisitor visitor) {
+            Serializer<T> serializer = context.writeWith();
             Object[] serialized = new Object[array.length];
             for (int i = 0; i < array.length; i++)
                 serialized[i] = serializer != null ? Serializer.serialize(serializer, array[i]) : array[i];
@@ -360,17 +362,18 @@ public class Serializers {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public T @Nullable [] deserialize(DataVisitor visitor, ErrorContainer errorContainer) {
+            Class<T> type = JavaUtils.asClass(context.type());
+            Serializer<T> deserializer = context.readWith();
             Object[] array = visitor.readArray().orElse(null);
             if (array == null) return null;
             return Arrays.stream(array)
-                    .map(object -> (T) (serializer == null ? object : Serializers.deserialize(
-                            serializer,
+                    .map(object -> Serializers.deserialize(
+                            deserializer,
                             object,
-                            errorContainer,
-                            arrayType.componentType()
-                    )))
+                            type,
+                            errorContainer
+                    ))
                     .filter(Objects::nonNull)
                     .toArray(arrayFactory);
         }
@@ -382,30 +385,41 @@ public class Serializers {
         private final IntFunction<W[]> wrapperFactory;
         private final Function<P, W[]> wrapper;
         private final Function<W[], P> unwrapper;
-        private final Serializer<W> componentSerializer;
+        private final SerializerContext context;
 
         public PrimitiveArraySerializer(
-                Class<W> wrapperType,
                 IntFunction<W[]> wrapperFactory,
                 Function<P, W[]> wrapper,
                 Function<W[], P> unwrapper,
                 SerializerContext context
         ) {
+            AnnotatedArrayType type = (AnnotatedArrayType) context.annotatedType();
             this.wrapperFactory = wrapperFactory;
             this.wrapper = wrapper;
             this.unwrapper = unwrapper;
-            this.componentSerializer = context.registry().getSerializer(wrapperType, context);
+            this.context = context.withType(type.getAnnotatedGenericComponentType());
         }
 
         @Override
         public void serialize(P primitiveArray, DataVisitor visitor) {
-            visitor.writeArray(wrapper.apply(primitiveArray));
+            Serializer<W> serializer = context.writeWith();
+            if (serializer == null) {
+                visitor.writeArray(wrapper.apply(primitiveArray));
+                return;
+            }
+            W[] wrapped = wrapper.apply(primitiveArray);
+            Object[] serialized = new Object[wrapped.length];
+            for (int i = 0; i < wrapped.length; i++)
+                serialized[i] = Serializer.serialize(serializer, wrapped[i]);
+            visitor.writeArray(serialized);
         }
 
         @Override
         public @Nullable P deserialize(DataVisitor visitor, ErrorContainer errorContainer) {
+            Class<W> type = JavaUtils.asClass(context.type());
+            Serializer<W> deserializer = context.readWith();
             return visitor.readArray().map(objects -> unwrapper.apply(Arrays.stream(objects)
-                            .map(object -> Serializer.deserialize(componentSerializer, object, errorContainer))
+                            .map(object -> Serializers.deserialize(deserializer, object, type, errorContainer))
                             .filter(Objects::nonNull)
                             .toArray(wrapperFactory)))
                     .orElse(null);
@@ -416,7 +430,7 @@ public class Serializers {
     public static class PrimitiveByteArraySerializer extends PrimitiveArraySerializer<byte[], Byte> {
 
         public PrimitiveByteArraySerializer(SerializerContext context) {
-            super(Byte.class, Byte[]::new, ArrayUtils::wrapArray, ArrayUtils::unwrapArray, context);
+            super(Byte[]::new, ArrayUtils::wrapArray, ArrayUtils::unwrapArray, context);
         }
 
     }
@@ -424,7 +438,7 @@ public class Serializers {
     public static class PrimitiveShortArraySerializer extends PrimitiveArraySerializer<short[], Short> {
 
         public PrimitiveShortArraySerializer(SerializerContext context) {
-            super(Short.class, Short[]::new, ArrayUtils::wrapArray, ArrayUtils::unwrapArray, context);
+            super(Short[]::new, ArrayUtils::wrapArray, ArrayUtils::unwrapArray, context);
         }
 
     }
@@ -432,7 +446,7 @@ public class Serializers {
     public static class PrimitiveIntArraySerializer extends PrimitiveArraySerializer<int[], Integer> {
 
         public PrimitiveIntArraySerializer(SerializerContext context) {
-            super(Integer.class, Integer[]::new, ArrayUtils::wrapArray, ArrayUtils::unwrapArray, context);
+            super(Integer[]::new, ArrayUtils::wrapArray, ArrayUtils::unwrapArray, context);
         }
 
     }
@@ -440,7 +454,7 @@ public class Serializers {
     public static class PrimitiveLongArraySerializer extends PrimitiveArraySerializer<long[], Long> {
 
         public PrimitiveLongArraySerializer(SerializerContext context) {
-            super(Long.class, Long[]::new, ArrayUtils::wrapArray, ArrayUtils::unwrapArray, context);
+            super(Long[]::new, ArrayUtils::wrapArray, ArrayUtils::unwrapArray, context);
         }
 
     }
@@ -448,7 +462,7 @@ public class Serializers {
     public static class PrimitiveFloatArraySerializer extends PrimitiveArraySerializer<float[], Float> {
 
         public PrimitiveFloatArraySerializer(SerializerContext context) {
-            super(Float.class, Float[]::new, ArrayUtils::wrapArray, ArrayUtils::unwrapArray, context);
+            super(Float[]::new, ArrayUtils::wrapArray, ArrayUtils::unwrapArray, context);
         }
 
     }
@@ -456,7 +470,7 @@ public class Serializers {
     public static class PrimitiveDoubleArraySerializer extends PrimitiveArraySerializer<double[], Double> {
 
         public PrimitiveDoubleArraySerializer(SerializerContext context) {
-            super(Double.class, Double[]::new, ArrayUtils::wrapArray, ArrayUtils::unwrapArray, context);
+            super(Double[]::new, ArrayUtils::wrapArray, ArrayUtils::unwrapArray, context);
         }
 
     }
@@ -464,7 +478,7 @@ public class Serializers {
     public static class PrimitiveBooleanArraySerializer extends PrimitiveArraySerializer<boolean[], Boolean> {
 
         public PrimitiveBooleanArraySerializer(SerializerContext context) {
-            super(Boolean.class, Boolean[]::new, ArrayUtils::wrapArray, ArrayUtils::unwrapArray, context);
+            super(Boolean[]::new, ArrayUtils::wrapArray, ArrayUtils::unwrapArray, context);
         }
 
     }
@@ -523,7 +537,9 @@ public class Serializers {
         public void serialize(C configuration, DataVisitor visitor) {
             ConfigAdapter<?> configAdapter = context.configAdapter().get();
             nodeStream(configuration.getClass()).forEach(node -> {
-                Object serialized = node.getSerialized(configuration);
+                Object primitive = node.getValue(configuration);
+                Serializer<Object> writeWith = context.withNode(node).writeWith();
+                Object serialized = writeWith == null ? primitive : Serializer.serialize(writeWith, primitive);
                 if (serialized == null && node.isHidden()) return;
                 if (!configAdapter.setPrimitive(node.getFormattedName(), serialized)) {
                     handleError(
@@ -560,15 +576,16 @@ public class Serializers {
                     handleError(node, new ErrorEntry(ErrorType.KEY_NOT_FOUND, "Required key '" + key + "' is missing"));
                     return;
                 }
-                Serializer<?> deserializer = node.getReadWith();
-                if (deserializer == null && !node.getActualType().isInstance(primitive)) {
-                    handleError(node, new ErrorEntry(ErrorType.SERIALIZER_NOT_FOUND, COULD_NOT_DESERIALIZE.apply(node.getActualType())));
+                Class<?> type = node.getActualType();
+                Serializer<?> readWith = context.withNode(node).readWith();
+                if (readWith == null && !type.isInstance(primitive)) {
+                    handleError(node, new ErrorEntry(ErrorType.SERIALIZER_NOT_FOUND, COULD_NOT_DESERIALIZE.apply(type)));
                     return;
                 }
-                Object deserialized = Serializers.deserialize(deserializer, primitive, errorContainer, node.getActualType());
+                Object deserialized = Serializers.deserialize((Serializer) readWith, primitive, type, errorContainer);
                 errorContainer.handleErrors(context);
                 if (deserialized == null) return;
-                ((ClassBuilder) builder).setComponent(node.getName(), node.getActualType(), deserialized);
+                ((ClassBuilder) builder).setComponent(node.getName(), type, deserialized);
             });
             unhandledKeys.forEach(key -> errorHandler.handle(
                     context.withNode(null),

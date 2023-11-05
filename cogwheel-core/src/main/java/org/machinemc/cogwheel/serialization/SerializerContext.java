@@ -1,8 +1,12 @@
 package org.machinemc.cogwheel.serialization;
 
+import org.machinemc.cogwheel.annotations.ReadWith;
+import org.machinemc.cogwheel.annotations.SerializeWith;
+import org.machinemc.cogwheel.annotations.WriteWith;
 import org.machinemc.cogwheel.config.ConfigAdapter;
 import org.machinemc.cogwheel.config.ConfigNode;
 import org.machinemc.cogwheel.config.ConfigProperties;
+import org.machinemc.cogwheel.util.JavaUtils;
 import org.machinemc.cogwheel.util.error.ErrorContainer;
 import org.machinemc.cogwheel.util.error.ErrorType;
 
@@ -33,6 +37,41 @@ public record SerializerContext(
 
     public SerializerRegistry registry() {
         return properties().serializerRegistry();
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> Serializer<T> writeWith() {
+        Serializer<T> serializer = Optional.ofNullable(annotatedType().getAnnotation(WriteWith.class))
+                .map(WriteWith::value)
+                .map(aClass -> Serializers.newSerializer(aClass, this))
+                .orElse(null);
+        if (serializer == null) serializer = serializeWith();
+        return serializer;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> Serializer<T> readWith() {
+        Serializer<T> serializer = Optional.ofNullable(annotatedType().getAnnotation(ReadWith.class))
+                .map(ReadWith::value)
+                .map(aClass -> Serializers.newSerializer(aClass, this))
+                .orElse(null);
+        if (serializer == null) serializer = serializeWith();
+        return serializer;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> Serializer<T> serializeWith() {
+        AnnotatedType type = annotatedType();
+        Serializer<T> serializer = Optional.ofNullable(type.getAnnotation(SerializeWith.class))
+                .map(SerializeWith::value)
+                .map(aClass -> Serializers.newSerializer(aClass, this))
+                .orElse(null);
+        if (serializer == null) {
+            Class<T> cls = JavaUtils.asClass(type);
+            if (cls.isPrimitive()) cls = (Class<T>) JavaUtils.wrapPrimitiveClass(cls);
+            return registry().getSerializer(cls, this);
+        }
+        return serializer;
     }
 
     public void error(ErrorType type, String message) {

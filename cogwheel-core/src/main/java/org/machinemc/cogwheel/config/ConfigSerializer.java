@@ -45,8 +45,10 @@ public abstract class ConfigSerializer<T> {
     }
 
     private <C extends Configuration> C load(ConfigAdapter<T> adapter, Class<C> configurationClass) {
-        Serializers.ConfigurationSerializer<C> serializer = newSerializer(configurationClass);
-        C configuration = Serializer.deserialize(serializer, adapter);
+        SerializerContext context = newContext();
+        Serializers.ConfigurationSerializer<C> serializer =
+                new Serializers.ConfigurationSerializer<>(configurationClass, context);
+        C configuration = Serializer.deserialize(serializer, adapter, context.errorContainer());
         if (configuration == null)
             throw new IllegalArgumentException("Could not load configuration: " + configurationClass);
         return configuration;
@@ -58,7 +60,11 @@ public abstract class ConfigSerializer<T> {
     }
 
     private <C extends Configuration> Serializers.ConfigurationSerializer<C> newSerializer(Class<C> configurationClass) {
-        return new Serializers.ConfigurationSerializer<>(configurationClass, new SerializerContext(properties, this::newAdapter));
+        return new Serializers.ConfigurationSerializer<>(configurationClass, newContext());
+    }
+
+    private SerializerContext newContext() {
+        return new SerializerContext(properties, this::newAdapter);
     }
 
     public ConfigProperties getProperties() {

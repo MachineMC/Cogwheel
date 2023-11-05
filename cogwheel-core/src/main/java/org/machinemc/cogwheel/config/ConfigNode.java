@@ -19,7 +19,6 @@ public sealed abstract class ConfigNode<A extends AnnotatedElement> permits Fiel
 
     protected final A element;
     private final String formattedName;
-    private final @Nullable Serializer<?> writeWith, readWith;
     private final String @Nullable [] comments;
     private final @Nullable String inlineComment;
     private final boolean optional, hidden;
@@ -34,27 +33,6 @@ public sealed abstract class ConfigNode<A extends AnnotatedElement> permits Fiel
                 .orElse(null);
         if (formatter == null) formatter = context.properties().keyFormatter();
         this.formattedName = formatter != null ? formatter.format(name) : name;
-
-        Serializer<?> serializer = getAnnotation(SerializeWith.class)
-                .map(SerializeWith::value)
-                .map(serializerClass -> Serializers.newSerializer(serializerClass, context))
-                .orElse(null);
-        if (serializer == null) serializer = context.registry().getSerializer(getType(), context);
-
-        Serializer<?> writeWith = getAnnotation(WriteWith.class)
-                .map(WriteWith::value)
-                .map(serializerClass -> Serializers.newSerializer(serializerClass, context))
-                .orElse(null);
-        if (writeWith == null) writeWith = serializer;
-
-        Serializer<?> readWith = getAnnotation(ReadWith.class)
-                .map(ReadWith::value)
-                .map(serializerClass -> Serializers.newSerializer(serializerClass, context))
-                .orElse(null);
-        if (readWith == null) readWith = serializer;
-
-        this.writeWith = writeWith;
-        this.readWith = readWith;
 
         this.comments = getAnnotation(Comment.class).map(Comment::value).orElse(null);
         this.inlineComment = getAnnotation(Comment.Inline.class).map(Comment.Inline::value).orElse(null);
@@ -80,13 +58,6 @@ public sealed abstract class ConfigNode<A extends AnnotatedElement> permits Fiel
 
     public abstract Object getValue(Object holder);
 
-    @SuppressWarnings("unchecked")
-    public <T> Object getSerialized(Object holder) {
-        Object object = getValue(holder);
-        if (object == null || writeWith == null) return object;
-        return Serializer.serialize((Serializer<T>) writeWith, (T) object);
-    }
-
     public <T extends Annotation> Optional<T> getAnnotation(Class<T> annotationClass) {
         return Optional.ofNullable(getAnnotatedElement().getAnnotation(annotationClass));
     }
@@ -94,14 +65,6 @@ public sealed abstract class ConfigNode<A extends AnnotatedElement> permits Fiel
     public abstract AnnotatedElement getAnnotatedElement();
 
     public abstract AnnotatedType getAnnotatedType();
-
-    public @Nullable Serializer<?> getWriteWith() {
-        return writeWith;
-    }
-
-    public @Nullable Serializer<?> getReadWith() {
-        return readWith;
-    }
 
     public String @Nullable [] getComments() {
         return comments;

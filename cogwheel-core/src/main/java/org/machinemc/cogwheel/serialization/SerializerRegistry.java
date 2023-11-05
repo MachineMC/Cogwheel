@@ -19,17 +19,23 @@ public class SerializerRegistry {
 
     public static final SerializerRegistry DEFAULT_REGISTRY = new DefaultSerializerRegistry();
     final Map<Class<?>, SerializerFactory<?>> serializerMap;
+    private final boolean useDefaults;
 
     public SerializerRegistry() {
-        this(HashMap::new);
+        this(true);
     }
 
-    public SerializerRegistry(Supplier<Map<Class<?>, SerializerFactory<?>>> factory) {
-        this(factory.get());
+    public SerializerRegistry(boolean useDefaults) {
+        this(HashMap::new, useDefaults);
     }
 
-    public SerializerRegistry(Map<Class<?>, SerializerFactory<?>> serializerMap) {
+    public SerializerRegistry(Supplier<Map<Class<?>, SerializerFactory<?>>> factory, boolean useDefaults) {
+        this(factory.get(), useDefaults);
+    }
+
+    public SerializerRegistry(Map<Class<?>, SerializerFactory<?>> serializerMap, boolean useDefaults) {
         this.serializerMap = serializerMap;
+        this.useDefaults = useDefaults;
     }
 
     @SuppressWarnings("unchecked")
@@ -41,7 +47,7 @@ public class SerializerRegistry {
 
     public <T> void addSerializer(Class<T> type, Serializer<T> serializer) {
         Objects.requireNonNull(serializer, "serializer");
-        addSerializer(type, context -> serializer);
+        addSerializer(type, SerializerFactory.of(serializer));
     }
 
     @SuppressWarnings("unchecked")
@@ -62,18 +68,23 @@ public class SerializerRegistry {
     }
 
     public <T> Serializer<T> getSerializer(Class<T> type, SerializerContext context) {
-        SerializerFactory<T> factory = getSerializer(type);
+        SerializerFactory<T> factory = getSerializerFactory(type);
         return factory != null ? factory.newInstance(context) : null;
     }
 
     @SuppressWarnings("unchecked")
-    public <T> SerializerFactory<T> getSerializer(Class<T> type) {
+    public <T> SerializerFactory<T> getSerializerFactory(Class<T> type) {
         if (type == null) return null;
         SerializerFactory<T> serializer = (SerializerFactory<T>) serializerMap.get(type);
-        return serializer != null ? serializer : DEFAULT_REGISTRY.getSerializer(type);
+        if (serializer != null || !useDefaults) return serializer;
+        return DEFAULT_REGISTRY.getSerializerFactory(type);
     }
 
     private static class DefaultSerializerRegistry extends SerializerRegistry {
+
+        private DefaultSerializerRegistry() {
+            super(false);
+        }
 
         private boolean allowRegistration;
 
@@ -131,10 +142,10 @@ public class SerializerRegistry {
 
         @Override
         @SuppressWarnings("unchecked")
-        public <T> SerializerFactory<T> getSerializer(Class<T> type) {
-            SerializerFactory<T> factory = (SerializerFactory<T>) serializerMap.get(type);
+        public <T> SerializerFactory<T> getSerializerFactory(Class<T> type) {
+            SerializerFactory<T> factory = super.getSerializerFactory(type);
             if (factory != null) return factory;
-            if (type.isEnum()) return context -> (Serializer<T>) new EnumSerializer<>(type.asSubclass(Enum.class));
+            if (type.isEnum()) return SerializerFactory.of((Serializer<T>) new EnumSerializer<>(type.asSubclass(Enum.class)));
             if (type.isArray()) return context -> (Serializer<T>) new ArraySerializer<>(context);
             if (Configuration.class.isAssignableFrom(type))
                 return context -> (Serializer<T>) new ConfigurationSerializer<>(context);

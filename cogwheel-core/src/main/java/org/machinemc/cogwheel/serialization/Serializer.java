@@ -17,13 +17,13 @@ public interface Serializer<T> {
         return visitor.get();
     }
 
+    static <T> @Nullable T deserialize(Serializer<T> serializer, Object object) {
+        return deserialize(serializer, object, new ErrorContainer());
+    }
+
     static <T> @Nullable T deserialize(Serializer<T> serializer, Object object, ErrorContainer errorContainer) {
         SingletonDataVisitor visitor = new SingletonDataVisitor(object).withFlags(DataVisitor.READ_ACCESS);
         return serializer.deserialize(visitor, errorContainer);
-    }
-
-    static <T> @Nullable T deserialize(Serializer<T> serializer, Object object) {
-        return deserialize(serializer, object, new ErrorContainer());
     }
 
 }
