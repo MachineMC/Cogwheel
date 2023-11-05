@@ -167,6 +167,10 @@ public final class JavaUtils {
         };
     }
 
+    public static <T> Class<T> asClass(AnnotatedType annotatedType) {
+        return asClass(annotatedType.getType());
+    }
+
     public static String toString(Object object, String defaultIfNull) {
         if (object == null) return defaultIfNull;
         return toString(object);

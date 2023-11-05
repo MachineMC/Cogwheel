@@ -15,9 +15,7 @@ import org.machinemc.cogwheel.util.error.ErrorEntry;
 import org.machinemc.cogwheel.util.error.ErrorType;
 
 import java.io.File;
-import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -37,14 +35,14 @@ public class Serializers {
         return JavaUtils.newInstance(serializerClass);
     }
 
-    private static Type[] validateParameterTypes(Type[] parameters) {
-        for (Type parameter : parameters)
+    private static AnnotatedType[] validateParameterTypes(AnnotatedType[] parameters) {
+        for (AnnotatedType parameter : parameters)
             validateParameterType(parameter);
         return parameters;
     }
 
-    private static void validateParameterType(Type parameter) {
-        switch (parameter) {
+    private static void validateParameterType(AnnotatedType parameter) {
+        switch (parameter.getType()) {
             case Class<?> ignore -> {}
             case ParameterizedType ignore -> {}
             case GenericArrayType ignore -> {}
@@ -251,8 +249,8 @@ public class Serializers {
 
         public CollectionSerializer(IntFunction<C> factory, SerializerContext context) {
             this.factory = factory;
-            ParameterizedType type = (ParameterizedType) context.type();
-            Type argument = validateParameterTypes(type.getActualTypeArguments())[0];
+            AnnotatedParameterizedType type = (AnnotatedParameterizedType) context.annotatedType();
+            AnnotatedType argument = validateParameterTypes(type.getAnnotatedActualTypeArguments())[0];
             SerializerRegistry registry = context.registry();
             this.serializer = registry.getSerializer(JavaUtils.asClass(argument), context.withType(argument));
         }
@@ -288,11 +286,14 @@ public class Serializers {
 
         @SuppressWarnings("unchecked")
         public MapSerializer(SerializerContext context) {
-            ParameterizedType type = (ParameterizedType) context.type();
-            Type[] parameters = validateParameterTypes(type.getActualTypeArguments());
-            if (!(parameters[0] instanceof Class<?> keyClass) || (!String.class.isAssignableFrom(keyClass) && !keyClass.isEnum()))
-                throw new IllegalArgumentException("Map keys may only be of types '%s' or '%s'. Not '%s'"
-                        .formatted(String.class.getTypeName(), Enum.class.getTypeName(), parameters[0].getTypeName()));
+            AnnotatedParameterizedType type = (AnnotatedParameterizedType) context.annotatedType();
+            AnnotatedType[] parameters = validateParameterTypes(type.getAnnotatedActualTypeArguments());
+            if (!(parameters[0].getType() instanceof Class<?> keyClass) || (!String.class.isAssignableFrom(keyClass) && !keyClass.isEnum()))
+                throw new IllegalArgumentException("Map keys may only be of types '%s' or '%s'. Not '%s'".formatted(
+                        String.class.getTypeName(),
+                        Enum.class.getTypeName(),
+                        parameters[0].getType().getTypeName()
+                ));
             SerializerRegistry registry = context.registry();
             context = context.withType(parameters[1]);
             this.keyType = (Class<K>) keyClass;
@@ -338,13 +339,13 @@ public class Serializers {
         private final @Nullable Serializer<T> serializer;
 
         public ArraySerializer(SerializerContext context) {
-            this(context, context.type());
+            this(context, (AnnotatedArrayType) context.annotatedType());
         }
 
         @SuppressWarnings("unchecked")
-        private ArraySerializer(SerializerContext context, Type type) {
+        private ArraySerializer(SerializerContext context, AnnotatedArrayType type) {
             SerializerRegistry registry = context.registry();
-            context = context.withType(getComponentType(type));
+            context = context.withType(type.getAnnotatedGenericComponentType());
             this.arrayType = JavaUtils.asClass(type);
             this.serializer = registry.getSerializer((Class<T>) arrayType.componentType(), context);
             this.arrayFactory = length -> (T[]) ArrayUtils.newArrayInstance(arrayType.componentType(), length);
@@ -372,14 +373,6 @@ public class Serializers {
                     )))
                     .filter(Objects::nonNull)
                     .toArray(arrayFactory);
-        }
-
-        private static Type getComponentType(Type type) {
-            return switch (type) {
-                case Class<?> cls -> cls.componentType();
-                case GenericArrayType arrayType -> arrayType.getGenericComponentType();
-                default -> null;
-            };
         }
 
     }
@@ -517,7 +510,7 @@ public class Serializers {
         private final ConfigProperties properties;
 
         public ConfigurationSerializer(SerializerContext context) {
-            this(JavaUtils.asClass(context.type()), context);
+            this(JavaUtils.asClass(context.annotatedType()), context);
         }
 
         public ConfigurationSerializer(Class<C> type, SerializerContext context) {

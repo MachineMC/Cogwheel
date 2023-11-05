@@ -64,7 +64,7 @@ public sealed abstract class ConfigNode<A extends AnnotatedElement> permits Fiel
     }
 
     public Class<?> getActualType() {
-        return JavaUtils.asClass(getAnnotatedType().getType());
+        return JavaUtils.asClass(getAnnotatedType());
     }
 
     public Class<?> getType() {
