@@ -8,6 +8,10 @@ dependencies {
     implementation(libs.snakeyaml.engine)
 }
 
+java {
+    withSourcesJar()
+}
+
 publishing {
     repositories {
         maven {

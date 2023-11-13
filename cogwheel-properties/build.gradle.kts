@@ -7,6 +7,10 @@ dependencies {
     implementation(project(":cogwheel-core"))
 }
 
+java {
+    withSourcesJar()
+}
+
 publishing {
     repositories {
         maven {

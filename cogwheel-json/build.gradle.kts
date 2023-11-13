@@ -8,6 +8,10 @@ dependencies {
     implementation(libs.google.gson)
 }
 
+java {
+    withSourcesJar()
+}
+
 publishing {
     repositories {
         maven {
