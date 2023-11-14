@@ -54,6 +54,7 @@ public class Serializers {
         return parameter;
     }
 
+    @SuppressWarnings("unchecked")
     private static <T> T deserialize(Serializer<T> deserializer, Object primitive, Class<T> as, ErrorContainer errorContainer) {
         if (primitive == null) return null;
         ErrorContainer childContainer = new ErrorContainer(errorContainer);
@@ -66,7 +67,7 @@ public class Serializers {
             );
             return null;
         }
-        return as.cast(deserialized);
+        return (T) deserialized;
     }
 
     public static class NumberSerializer<N extends Number> implements Serializer<N> {
