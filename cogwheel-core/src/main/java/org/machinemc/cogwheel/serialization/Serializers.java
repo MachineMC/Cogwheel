@@ -133,6 +133,20 @@ public class Serializers {
 
     }
 
+    public static class StringSerializer implements Serializer<String> {
+
+        @Override
+        public void serialize(String string, DataVisitor visitor) {
+            visitor.writeString(string);
+        }
+
+        @Override
+        public @Nullable String deserialize(DataVisitor visitor, ErrorContainer errorContainer) {
+            return visitor.readString().orElse(null);
+        }
+
+    }
+
     public static class UUIDSerializer implements Serializer<UUID> {
 
         @Override
@@ -586,7 +600,7 @@ public class Serializers {
                 Object deserialized = Serializers.deserialize((Serializer) readWith, primitive, type, errorContainer);
                 errorContainer.handleErrors(context);
                 if (deserialized == null) return;
-                ((ClassBuilder) builder).setComponent(node.getName(), type, deserialized);
+                builder.setComponent(node.getName(), (Class) type, deserialized);
             });
             unhandledKeys.forEach(key -> errorHandler.handle(
                     context.withNode(null),

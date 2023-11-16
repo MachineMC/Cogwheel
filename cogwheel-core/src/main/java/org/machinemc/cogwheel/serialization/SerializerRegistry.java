@@ -101,8 +101,10 @@ public class SerializerRegistry {
                     number -> NumberUtils.parseInteger(number.toString())));
             addSerializer(BigDecimal.class, new NumberSerializer<>(BigDecimal.class,
                     number -> NumberUtils.parseDecimal(number.toString())));
+            addSerializer(Number.class, new NumberSerializer<>(Number.class, number -> number));
 
             addSerializer(Boolean.class, new BooleanSerializer());
+            addSerializer(String.class, new StringSerializer());
 
             addSerializer(UUID.class, new UUIDSerializer());
             addSerializer(File.class, new FileSerializer());
