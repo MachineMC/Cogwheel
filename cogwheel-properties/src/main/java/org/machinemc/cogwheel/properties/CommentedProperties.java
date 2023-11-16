@@ -2,14 +2,17 @@ package org.machinemc.cogwheel.properties;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 public class CommentedProperties extends Properties {
 
     private final Map<String, @Nullable String[]> comments = new ConcurrentHashMap<>();
+    private final SequencedSet<Object> orderedKeys = new LinkedHashSet<>();
 
     public void setComments(String key, @Nullable String[] value) {
         comments.put(key, value);
@@ -19,13 +22,16 @@ public class CommentedProperties extends Properties {
         return Collections.unmodifiableMap(comments);
     }
 
+    public SequencedSet<Object> getOrderedKeys() {
+        return orderedKeys;
+    }
+
     public void store(Writer writer,
                       boolean colonSeparator,
                       boolean exclamationMarkComments,
                       boolean spacesBetweenSeparator,
                       boolean emptyLineBetweenEntries) throws IOException {
 
-        Set<String> keys = keySet().stream().map(String::valueOf).collect(Collectors.toSet());
         char commentChar = exclamationMarkComments ? '!' : '#';
         String separator;
         if (colonSeparator) {
@@ -34,6 +40,7 @@ public class CommentedProperties extends Properties {
             separator = spacesBetweenSeparator ? " = " : "=";
         }
 
+        String[] keys = orderedKeys.stream().map(String::valueOf).toArray(String[]::new);
         for (String key : keys) {
             String[] comments = this.comments.get(key);
             if (comments != null) {
@@ -99,6 +106,32 @@ public class CommentedProperties extends Properties {
             }
         }
         return outBuffer.toString();
+    }
+
+    @Override
+    public synchronized Object put(Object key, Object value) {
+        Object previous = super.put(key, value);
+        orderedKeys.add(key);
+        return previous;
+    }
+
+    @Override
+    public synchronized Object remove(Object key) {
+        Object previous = super.remove(key);
+        orderedKeys.remove(key);
+        return previous;
+    }
+
+    @Override
+    public synchronized void putAll(Map<?, ?> t) {
+        super.putAll(t);
+        orderedKeys.addAll(t.keySet());
+    }
+
+    @Override
+    public synchronized void clear() {
+        super.clear();
+        orderedKeys.clear();
     }
 
 }
