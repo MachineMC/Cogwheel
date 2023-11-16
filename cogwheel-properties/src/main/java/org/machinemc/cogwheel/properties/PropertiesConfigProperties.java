@@ -4,13 +4,13 @@ import org.machinemc.cogwheel.config.ConfigProperties;
 
 public class PropertiesConfigProperties extends ConfigProperties {
 
-    boolean semicolonSeparator = false;
+    boolean colonSeparator = false;
     boolean exclamationMarkComments = false;
     boolean spacesBetweenSeparator = false;
     boolean emptyLineBetweenEntries = false;
 
-    public boolean semicolonSeparator() {
-        return semicolonSeparator;
+    public boolean colonSeparator() {
+        return colonSeparator;
     }
 
     public boolean exclamationMarkComments() {

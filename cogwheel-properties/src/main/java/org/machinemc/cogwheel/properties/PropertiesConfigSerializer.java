@@ -28,7 +28,7 @@ public class PropertiesConfigSerializer extends ConfigSerializer<CommentedProper
             PropertiesConfigProperties configProperties = getProperties(PropertiesConfigProperties.class);
             properties.store(
                     writer,
-                    configProperties.semicolonSeparator(),
+                    configProperties.colonSeparator(),
                     configProperties.exclamationMarkComments(),
                     configProperties.spacesBetweenSeparator(),
                     configProperties.emptyLineBetweenEntries()
@@ -63,8 +63,8 @@ public class PropertiesConfigSerializer extends ConfigSerializer<CommentedProper
             super(properties);
         }
 
-        public BuilderImpl semicolonSeparator(boolean semicolonSeparator) {
-            properties.semicolonSeparator = semicolonSeparator;
+        public BuilderImpl colonSeparator(boolean colonSeparator) {
+            properties.colonSeparator = colonSeparator;
             return getThis();
         }
 

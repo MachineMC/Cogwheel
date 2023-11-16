@@ -20,7 +20,7 @@ public class CommentedProperties extends Properties {
     }
 
     public void store(Writer writer,
-                      boolean semicolonSeparator,
+                      boolean colonSeparator,
                       boolean exclamationMarkComments,
                       boolean spacesBetweenSeparator,
                       boolean emptyLineBetweenEntries) throws IOException {
@@ -28,7 +28,7 @@ public class CommentedProperties extends Properties {
         Set<String> keys = keySet().stream().map(String::valueOf).collect(Collectors.toSet());
         char commentChar = exclamationMarkComments ? '!' : '#';
         String separator;
-        if (semicolonSeparator) {
+        if (colonSeparator) {
             separator = spacesBetweenSeparator ? ": " : ":";
         } else {
             separator = spacesBetweenSeparator ? " = " : "=";
@@ -52,11 +52,11 @@ public class CommentedProperties extends Properties {
     }
 
     public void store(OutputStream os,
-                      boolean semicolonSeparator,
+                      boolean colonSeparator,
                       boolean exclamationMarkComments,
                       boolean spacesBetweenSeparator,
                       boolean emptyLineBetweenEntries) throws IOException {
-        store(new OutputStreamWriter(os), semicolonSeparator, exclamationMarkComments, spacesBetweenSeparator, emptyLineBetweenEntries);
+        store(new OutputStreamWriter(os), colonSeparator, exclamationMarkComments, spacesBetweenSeparator, emptyLineBetweenEntries);
     }
 
     private static String saveConvert(String string) {
