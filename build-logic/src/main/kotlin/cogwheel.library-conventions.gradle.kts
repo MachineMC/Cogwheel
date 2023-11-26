@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "org.machinemc"
-version = "1.0-SNAPSHOT"
+version = "1.1.0"
 
 val libs = extensions.getByType(org.gradle.accessors.dm.LibrariesForLibs::class)
 
