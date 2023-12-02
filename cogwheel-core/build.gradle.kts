@@ -23,7 +23,7 @@ publishing {
         create<MavenPublication>("maven") {
             groupId = "org.machinemc"
             artifactId = "cogwheel-core"
-            version = "1.0.0"
+            version = "1.1.0"
             from(components["java"])
         }
     }
