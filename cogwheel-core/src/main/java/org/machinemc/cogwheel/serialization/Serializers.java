@@ -59,15 +59,14 @@ public class Serializers {
         if (primitive == null) return null;
         ErrorContainer childContainer = new ErrorContainer(errorContainer);
         Object deserialized = deserializer != null ? Serializer.deserialize(deserializer, primitive, childContainer) : primitive;
-        if (!as.isInstance(primitive) && deserialized == null && !childContainer.hasErrors()) {
-            childContainer.error(ErrorType.MISMATCHED_TYPES, "Could not deserialize (%s) '%s' as %s".formatted(
-                    primitive.getClass().getSimpleName(),
-                    JavaUtils.toString(primitive),
-                    as.getSimpleName())
-            );
-            return null;
-        }
-        return (T) deserialized;
+        if (as.isInstance(primitive) || deserialized != null || childContainer.hasErrors())
+            return (T) deserialized;
+        childContainer.error(ErrorType.MISMATCHED_TYPES, "Could not deserialize (%s) '%s' as %s".formatted(
+                primitive.getClass().getSimpleName(),
+                JavaUtils.toString(primitive),
+                as.getSimpleName()
+        ));
+        return null;
     }
 
     public static class NumberSerializer<N extends Number> implements Serializer<N> {
