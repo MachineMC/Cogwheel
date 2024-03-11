@@ -11,11 +11,6 @@ public class YamlConfigAdapter extends ConfigAdapter<YamlObject> {
     private YamlObject yamlObject = new YamlObject();
 
     @Override
-    public ConfigAdapter<YamlObject> newConfigInstance() {
-        return new YamlConfigAdapter();
-    }
-
-    @Override
     public YamlObject getConfig() {
         return yamlObject;
     }

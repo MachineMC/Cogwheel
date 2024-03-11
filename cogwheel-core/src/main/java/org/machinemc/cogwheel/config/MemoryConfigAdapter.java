@@ -20,11 +20,6 @@ public class MemoryConfigAdapter extends ConfigAdapter<Map<String, Object>> {
     }
 
     @Override
-    public ConfigAdapter<Map<String, Object>> newConfigInstance() {
-        return new MemoryConfigAdapter();
-    }
-
-    @Override
     public Map<String, Object> getConfig() {
         return map;
     }
@@ -35,7 +30,7 @@ public class MemoryConfigAdapter extends ConfigAdapter<Map<String, Object>> {
     }
 
     @Override
-    public Map<String, Object> getAsMap() {
+    public Map<String, Object> asMapView() {
         return map;
     }
 

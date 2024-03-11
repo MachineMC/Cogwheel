@@ -12,11 +12,6 @@ public class PropertiesConfigAdapter extends ConfigAdapter<CommentedProperties> 
     private CommentedProperties properties = new CommentedProperties();
 
     @Override
-    public ConfigAdapter<CommentedProperties> newConfigInstance() {
-        return new PropertiesConfigAdapter();
-    }
-
-    @Override
     public CommentedProperties getConfig() {
         return properties;
     }
