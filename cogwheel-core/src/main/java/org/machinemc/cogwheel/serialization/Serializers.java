@@ -576,7 +576,7 @@ public class Serializers {
         @Override
         @SuppressWarnings({"unchecked", "rawtypes"})
         public @Nullable C deserialize(DataVisitor visitor, ErrorContainer errorContainer) {
-            Map<String, Object> config = visitor.readConfig().map(ConfigAdapter::getAsMap).orElse(null);
+            Map<String, Object> config = visitor.readConfig().map(ConfigAdapter::asMapView).orElse(null);
             if (config == null) return null;
             Set<String> unhandledKeys = new LinkedHashSet<>(config.keySet());
             ErrorHandler errorHandler = properties.errorHandler();

@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 public abstract class ConfigAdapter<T> {
 
-    public abstract ConfigAdapter<T> newConfigInstance();
+    private transient Map<String, Object> mapView = null;
 
     public abstract T getConfig();
 
@@ -19,8 +19,9 @@ public abstract class ConfigAdapter<T> {
         return keys().contains(key);
     }
 
-    public Map<String, Object> getAsMap() {
-        return new ConfigAdapterMap(this);
+    public Map<String, Object> asMapView() {
+        if (mapView == null) mapView = new ConfigAdapterMap(this);
+        return mapView;
     }
 
     public abstract Optional<Number> getNumber(String key);

@@ -11,11 +11,6 @@ public class JSONConfigAdapter extends ConfigAdapter<JsonObject> {
     private JsonObject jsonObject = new JsonObject();
 
     @Override
-    public ConfigAdapter<JsonObject> newConfigInstance() {
-        return new JSONConfigAdapter();
-    }
-
-    @Override
     public JsonObject getConfig() {
         return jsonObject;
     }

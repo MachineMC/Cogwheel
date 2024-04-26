@@ -28,7 +28,7 @@ public abstract class ConfigSerializer<T> {
 
     @SuppressWarnings("unchecked")
     public <C extends Configuration> ConfigAdapter<T> serialize(C configuration) {
-        Serializers.ConfigurationSerializer<C> serializer = newSerializer(configuration);
+        Serializers.ConfigurationSerializer<C> serializer = getSerializerForConfig(configuration);
         return (ConfigAdapter<T>) Serializer.serialize(serializer, configuration);
     }
 
@@ -45,7 +45,7 @@ public abstract class ConfigSerializer<T> {
     }
 
     private <C extends Configuration> C load(ConfigAdapter<T> adapter, Class<C> configurationClass) {
-        SerializerContext context = newContext();
+        SerializerContext context = createContext();
         Serializers.ConfigurationSerializer<C> serializer =
                 new Serializers.ConfigurationSerializer<>(configurationClass, context);
         C configuration = Serializer.deserialize(serializer, adapter, context.errorContainer());
@@ -55,15 +55,19 @@ public abstract class ConfigSerializer<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private <C extends Configuration> Serializers.ConfigurationSerializer<C> newSerializer(C configuration) {
-        return (Serializers.ConfigurationSerializer<C>) newSerializer(configuration.getClass());
+    private <C extends Configuration> Serializers.ConfigurationSerializer<C> getSerializerForConfig(C configuration) {
+        return (Serializers.ConfigurationSerializer<C>) getSerializerForConfigClass(configuration.getClass());
     }
 
-    private <C extends Configuration> Serializers.ConfigurationSerializer<C> newSerializer(Class<C> configurationClass) {
-        return new Serializers.ConfigurationSerializer<>(configurationClass, newContext());
+    private <C extends Configuration> Serializers.ConfigurationSerializer<C> getSerializerForConfigClass(Class<C> configurationClass) {
+        return getSerializerForConfigClass(configurationClass, createContext());
     }
 
-    private SerializerContext newContext() {
+    private <C extends Configuration> Serializers.ConfigurationSerializer<C> getSerializerForConfigClass(Class<C> configurationClass, SerializerContext context) {
+        return new Serializers.ConfigurationSerializer<>(configurationClass, context);
+    }
+
+    private SerializerContext createContext() {
         return new SerializerContext(properties, this::newAdapter);
     }
 
