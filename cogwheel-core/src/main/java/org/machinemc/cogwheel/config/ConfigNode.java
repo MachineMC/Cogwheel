@@ -1,11 +1,12 @@
 package org.machinemc.cogwheel.config;
 
-import org.machinemc.cogwheel.keyformatter.KeyFormatter;
-import org.machinemc.cogwheel.serialization.Serializer;
-import org.machinemc.cogwheel.serialization.SerializerContext;
-import org.machinemc.cogwheel.serialization.Serializers;
 import org.jetbrains.annotations.Nullable;
-import org.machinemc.cogwheel.annotations.*;
+import org.machinemc.cogwheel.annotations.Comment;
+import org.machinemc.cogwheel.annotations.FormatKeyWith;
+import org.machinemc.cogwheel.annotations.Hidden;
+import org.machinemc.cogwheel.annotations.Key;
+import org.machinemc.cogwheel.keyformatter.KeyFormatter;
+import org.machinemc.cogwheel.serialization.SerializerContext;
 import org.machinemc.cogwheel.util.JavaUtils;
 
 import java.lang.annotation.Annotation;
@@ -37,7 +38,9 @@ public sealed abstract class ConfigNode<A extends AnnotatedElement> permits Fiel
         this.comments = getAnnotation(Comment.class).map(Comment::value).orElse(null);
         this.inlineComment = getAnnotation(Comment.Inline.class).map(Comment.Inline::value).orElse(null);
 
-        this.optional = getAnnotation(org.machinemc.cogwheel.annotations.Optional.class).isPresent();
+        boolean optional = getAnnotation(org.machinemc.cogwheel.annotations.Optional.class).isPresent();
+        optional |= getAnnotation(Nullable.class).isPresent();
+        this.optional = optional;
         this.hidden = getAnnotation(Hidden.class).isPresent();
     }
 
