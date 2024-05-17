@@ -65,10 +65,10 @@ public final class NumberUtils {
     public static class ClampedNumber extends Number {
 
         private final Number number;
-        private Byte clampedByte;
-        private Short clampedShort;
-        private Integer clampedInt;
-        private Long clampedLong;
+        private transient Byte clampedByte;
+        private transient Short clampedShort;
+        private transient Integer clampedInt;
+        private transient Long clampedLong;
 
         @Contract("null -> fail")
         public ClampedNumber(Number number) {
