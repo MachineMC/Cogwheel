@@ -38,9 +38,7 @@ public sealed abstract class ConfigNode<A extends AnnotatedElement> permits Fiel
         this.comments = getAnnotation(Comment.class).map(Comment::value).orElse(null);
         this.inlineComment = getAnnotation(Comment.Inline.class).map(Comment.Inline::value).orElse(null);
 
-        boolean optional = getAnnotation(org.machinemc.cogwheel.annotations.Optional.class).isPresent();
-        optional |= getAnnotation(Nullable.class).isPresent();
-        this.optional = optional;
+        this.optional = getAnnotation(org.machinemc.cogwheel.annotations.Optional.class).isPresent();
         this.hidden = getAnnotation(Hidden.class).isPresent();
     }
 
