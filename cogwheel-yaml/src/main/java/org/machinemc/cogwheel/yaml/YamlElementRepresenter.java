@@ -106,7 +106,7 @@ public class YamlElementRepresenter extends BaseRepresenter {
             return representers.get(YamlPrimitive.class).representData(wrapped);
         });
 
-        classTags = new HashMap<>();
+        classTags = new LinkedHashMap<>();
         this.settings = settings;
     }
 

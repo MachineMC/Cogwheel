@@ -130,7 +130,7 @@ public class JSONConfigAdapter extends ConfigAdapter<JsonObject> {
     }
 
     private static Map<String, Object> mapJSONObject(JsonObject jsonObject) {
-        Map<String, Object> map = new HashMap<>(jsonObject.size());
+        Map<String, Object> map = LinkedHashMap.newLinkedHashMap(jsonObject.size());
         jsonObject.asMap().forEach((entry, jsonElement) -> map.put(entry, mapJSONElement(jsonElement)));
         return map;
     }

@@ -1,5 +1,6 @@
 package org.machinemc.cogwheel.config;
 
+import org.machinemc.cogwheel.annotations.FormatKeyWith;
 import org.machinemc.cogwheel.keyformatter.KeyFormatter;
 import org.machinemc.cogwheel.*;
 import org.machinemc.cogwheel.serialization.Serializer;
@@ -7,6 +8,7 @@ import org.machinemc.cogwheel.serialization.SerializerContext;
 import org.machinemc.cogwheel.serialization.SerializerFactory;
 import org.machinemc.cogwheel.serialization.SerializerRegistry;
 import org.machinemc.cogwheel.serialization.*;
+import org.machinemc.cogwheel.util.JavaUtils;
 
 import java.io.File;
 
@@ -45,7 +47,7 @@ public abstract class ConfigSerializer<T> {
     }
 
     private <C extends Configuration> C load(ConfigAdapter<T> adapter, Class<C> configurationClass) {
-        SerializerContext context = createContext();
+        SerializerContext context = createContext(configurationClass);
         Serializers.ConfigurationSerializer<C> serializer =
                 new Serializers.ConfigurationSerializer<>(configurationClass, context);
         C configuration = Serializer.deserialize(serializer, adapter, context.errorContainer());
@@ -60,14 +62,20 @@ public abstract class ConfigSerializer<T> {
     }
 
     private <C extends Configuration> Serializers.ConfigurationSerializer<C> getSerializerForConfigClass(Class<C> configurationClass) {
-        return getSerializerForConfigClass(configurationClass, createContext());
+        return getSerializerForConfigClass(configurationClass, createContext(configurationClass));
     }
 
     private <C extends Configuration> Serializers.ConfigurationSerializer<C> getSerializerForConfigClass(Class<C> configurationClass, SerializerContext context) {
         return new Serializers.ConfigurationSerializer<>(configurationClass, context);
     }
 
-    private SerializerContext createContext() {
+    private <C extends Configuration> SerializerContext createContext(Class<C> configurationClass) {
+        ConfigProperties properties = this.properties.clone();
+
+        if (configurationClass.isAnnotationPresent(FormatKeyWith.class)) {
+            properties.keyFormatter = JavaUtils.newInstance(configurationClass.getAnnotation(FormatKeyWith.class).value());
+        }
+
         return new SerializerContext(properties, this::newAdapter);
     }
 

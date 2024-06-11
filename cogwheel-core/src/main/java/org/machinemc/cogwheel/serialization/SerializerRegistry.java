@@ -26,7 +26,7 @@ public class SerializerRegistry {
     }
 
     public SerializerRegistry(boolean useDefaults) {
-        this(HashMap::new, useDefaults);
+        this(LinkedHashMap::new, useDefaults);
     }
 
     public SerializerRegistry(Supplier<Map<Class<?>, SerializerFactory<?>>> factory, boolean useDefaults) {
@@ -130,7 +130,7 @@ public class SerializerRegistry {
                     context -> new CollectionSerializer<>(length -> new LinkedList<>(), context));
 
             //noinspection unchecked, rawtypes
-            addSerializer(Map.class, ArrayUtils.array(SequencedMap.class, HashMap.class, LinkedHashMap.class),
+            addSerializer(Map.class, ArrayUtils.array(SequencedMap.class, HashMap.class, LinkedHashMap.class, TreeMap.class),
                     context -> new MapSerializer(context));
 
             allowRegistration = false;
