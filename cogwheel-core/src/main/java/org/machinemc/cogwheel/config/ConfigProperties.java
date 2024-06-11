@@ -5,7 +5,7 @@ import org.machinemc.cogwheel.keyformatter.KeyFormatter;
 import org.machinemc.cogwheel.serialization.SerializerRegistry;
 import org.machinemc.cogwheel.*;
 
-public class ConfigProperties {
+public class ConfigProperties implements Cloneable {
 
     SerializerRegistry serializerRegistry = new SerializerRegistry();
     ClassInitiator classInitiator = ClassInitiator.DEFAULT;
@@ -41,6 +41,15 @@ public class ConfigProperties {
 
     public ErrorHandler errorHandler() {
         return errorHandler;
+    }
+
+    @Override
+    public ConfigProperties clone() {
+        try {
+            return (ConfigProperties) super.clone();
+        } catch (CloneNotSupportedException exception) {
+            throw new AssertionError();
+        }
     }
 
 }

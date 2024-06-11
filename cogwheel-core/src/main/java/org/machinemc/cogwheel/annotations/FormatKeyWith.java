@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * @see KeyFormatter
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD, ElementType.RECORD_COMPONENT})
+@Target({ElementType.TYPE, ElementType.FIELD, ElementType.RECORD_COMPONENT})
 public @interface FormatKeyWith {
 
     Class<? extends KeyFormatter> value();
