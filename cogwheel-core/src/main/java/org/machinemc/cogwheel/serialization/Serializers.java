@@ -319,7 +319,7 @@ public class Serializers {
 
         @Override
         public void serialize(Map<K, V> map, DataVisitor visitor) {
-            Map<String, Object> serializedMap = HashMap.newHashMap(map.size());
+            Map<String, Object> serializedMap = LinkedHashMap.newLinkedHashMap(map.size());
             Serializer<V> serializer = context.writeWith();
             map.forEach((key, value) -> {
                 Object serialized = serializer != null ? Serializer.serialize(serializer, value) : value;

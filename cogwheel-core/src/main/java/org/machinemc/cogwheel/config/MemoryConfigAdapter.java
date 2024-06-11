@@ -2,17 +2,14 @@ package org.machinemc.cogwheel.config;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class MemoryConfigAdapter extends ConfigAdapter<Map<String, Object>> {
 
     private final Map<String, Object> map;
 
     public MemoryConfigAdapter() {
-        this(new HashMap<>());
+        this(new LinkedHashMap<>());
     }
 
     protected MemoryConfigAdapter(Map<String, Object> map) {
