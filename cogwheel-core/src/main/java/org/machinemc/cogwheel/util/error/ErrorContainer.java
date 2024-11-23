@@ -41,6 +41,8 @@ public class ErrorContainer implements Iterable<ErrorEntry> {
         ErrorHandler handler = context.properties().errorHandler();
         entries.removeIf(entry -> {
             handler.handle(context, entry);
+            if (parent != null)
+                parent.entries.remove(entry);
             return true;
         });
     }
