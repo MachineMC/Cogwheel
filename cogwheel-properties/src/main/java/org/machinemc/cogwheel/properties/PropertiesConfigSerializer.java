@@ -3,6 +3,7 @@ package org.machinemc.cogwheel.properties;
 import org.machinemc.cogwheel.config.ConfigAdapter;
 import org.machinemc.cogwheel.config.ConfigProperties;
 import org.machinemc.cogwheel.config.ConfigSerializer;
+import org.machinemc.cogwheel.util.FileUtils;
 
 import java.io.File;
 import java.io.FileReader;
@@ -22,9 +23,8 @@ public class PropertiesConfigSerializer extends ConfigSerializer<CommentedProper
 
     @Override
     protected void save(File file, CommentedProperties properties) {
+        FileUtils.createIfAbsent(file);
         try (FileWriter writer = new FileWriter(file)) {
-            if (!file.exists() && (!file.getParentFile().exists() && !file.getParentFile().mkdirs() || !file.createNewFile()))
-                throw new UnsupportedOperationException("Couldn't create file '" + file + "'");
             PropertiesConfigProperties configProperties = getProperties(PropertiesConfigProperties.class);
             properties.store(
                     writer,

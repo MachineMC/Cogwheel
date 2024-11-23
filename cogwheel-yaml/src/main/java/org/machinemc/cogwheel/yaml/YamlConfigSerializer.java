@@ -3,6 +3,7 @@ package org.machinemc.cogwheel.yaml;
 import org.machinemc.cogwheel.config.ConfigAdapter;
 import org.machinemc.cogwheel.config.ConfigProperties;
 import org.machinemc.cogwheel.config.ConfigSerializer;
+import org.machinemc.cogwheel.util.FileUtils;
 import org.machinemc.cogwheel.yaml.wrapper.YamlObject;
 import org.snakeyaml.engine.v2.api.Dump;
 import org.snakeyaml.engine.v2.api.Load;
@@ -25,9 +26,8 @@ public class YamlConfigSerializer extends ConfigSerializer<YamlObject> {
 
     @Override
     protected void save(File file, YamlObject yamlObject) {
+        FileUtils.createIfAbsent(file);
         try (FileWriter writer = new FileWriter(file)) {
-            if (!file.exists() && (!file.getParentFile().exists() && !file.getParentFile().mkdirs() || !file.createNewFile()))
-                throw new UnsupportedOperationException("Couldn't create file '" + file + "'");
             Dump dump = getProperties(YamlConfigProperties.class).dump();
             writer.write(dump.dumpToString(yamlObject));
         } catch (IOException e) {

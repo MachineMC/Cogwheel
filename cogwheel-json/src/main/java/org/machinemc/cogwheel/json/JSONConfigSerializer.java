@@ -7,6 +7,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.machinemc.cogwheel.util.FileUtils;
 
 import java.io.File;
 import java.io.FileReader;
@@ -26,9 +27,8 @@ public class JSONConfigSerializer extends ConfigSerializer<JsonObject> {
 
     @Override
     protected void save(File file, JsonObject jsonObject) {
+        FileUtils.createIfAbsent(file);
         try (FileWriter writer = new FileWriter(file)) {
-            if (!file.exists() && (!file.getParentFile().exists() && !file.getParentFile().mkdirs() || !file.createNewFile()))
-                throw new UnsupportedOperationException("Couldn't create file '" + file + "'");
             getProperties(JSONConfigProperties.class).gson().toJson(jsonObject, writer);
         } catch (IOException e) {
             throw new RuntimeException(e);
