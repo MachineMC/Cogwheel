@@ -1,6 +1,7 @@
 package org.machinemc.cogwheel;
 
 import org.machinemc.cogwheel.config.ConfigAdapter;
+import org.machinemc.cogwheel.config.MemoryConfigAdapter;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -100,7 +101,13 @@ public class SingletonDataVisitor implements DataVisitor {
 
     @Override
     public Optional<ConfigAdapter<?>> readConfig() {
-        return read(ConfigAdapter.class);
+        //noinspection unchecked,rawtypes
+        return (Optional) read(ConfigAdapter.class).or(() -> read(Map.class).map(map -> {
+            MemoryConfigAdapter adapter = new MemoryConfigAdapter();
+            //noinspection unchecked
+            adapter.load(map);
+            return adapter;
+        }));
     }
 
     @Override
